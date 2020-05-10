@@ -48,6 +48,8 @@ public class CoreFunc {
         final float minref_sv = 64;
         final float minabs_sv = 95;
 
+        
+        //opencv颜色识别的HSV中各个颜色所对应的H的范围： Orange 0-22 Yellow 22- 38 Green 38-75 Blue 75-130
         // blue的H范围
         final int min_blue = 100;
         final int max_blue = 140;
@@ -55,7 +57,11 @@ public class CoreFunc {
         // yellow的H范围
         final int min_yellow = 15;
         final int max_yellow = 40;
-
+        
+        // green的H范围
+        final int min_green = 38;
+        final int max_green = 75;
+        
         // 转到HSV空间进行处理，颜色搜索主要使用的是H分量进行蓝色与黄色的匹配工作
         Mat src_hsv = new Mat();
         cvtColor(src, src_hsv, CV_BGR2HSV);
@@ -75,6 +81,10 @@ public class CoreFunc {
         case YELLOW:
             min_h = min_yellow;
             max_h = max_yellow;
+            break;
+        case GREEN:
+            min_h = min_green;
+            max_h = max_green;
             break;
         default:
             break;
@@ -185,6 +195,8 @@ public class CoreFunc {
             return PlateColor.BLUE;
         } else if (plateColorJudge(src, PlateColor.YELLOW, adaptive_minsv) == true) {
             return PlateColor.YELLOW;
+        } else if (plateColorJudge(src, PlateColor.GREEN, adaptive_minsv) == true) {
+            return PlateColor.GREEN;
         } else {
             return PlateColor.UNKNOWN;
         }
