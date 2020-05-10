@@ -131,21 +131,23 @@
 		    <version>4.0.1-1.4.4</version>
 		</dependency>
 		
+		<!-- org.bytedeco.javacpp-presets.opencv的包已经传递依赖了当前包 -->
+        <!-- <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacpp</artifactId>
+            <version>1.4.4</version>
+        </dependency> -->
+		
+		
 		<!-- 引入这个包，会把所有平台的依赖包都导入，大小有200+M，实际上用不到 -->
-		<!-- 只需要从lib目录引入对应的操作系统版本包(opencv-4.0.1-1.4.4-windows-x86_64.jar)即可 -->
+		<!-- 只需要从lib目录引入对应的操作系统版本包(lib/opencv-4.0.1-1.4.4-windows-x86_64.jar)即可 -->
 		<!-- <dependency>
 		    <groupId>org.bytedeco.javacpp-presets</groupId>
 		    <artifactId>opencv-platform</artifactId>
 		    <version>4.0.1-1.4.4</version>
 		</dependency> -->
 		
-		<!-- org.bytedeco.javacpp-presets.opencv的包已经传递依赖了当前包 -->
-		<!-- <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>javacpp</artifactId>
-            <version>1.4.4</version>
-        </dependency> -->
-
+		
 	</dependencies>
 
 
