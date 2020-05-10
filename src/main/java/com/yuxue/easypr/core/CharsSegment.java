@@ -30,11 +30,34 @@ import org.bytedeco.javacpp.opencv_imgcodecs;
 import com.yuxue.util.Convert;
 
 /**
- * 
+ * 字符分割
  * @author yuxue
  * @date 2020-04-28 09:45
  */
 public class CharsSegment {
+
+    // preprocessChar所用常量
+    final static int CHAR_SIZE = 20;
+    final static int HORIZONTAL = 1;
+    final static int VERTICAL = 0;
+
+    final static int DEFAULT_LIUDING_SIZE = 7;
+    final static int DEFAULT_MAT_WIDTH = 136;
+
+    final static int DEFAULT_COLORTHRESHOLD = 150;
+    final static float DEFAULT_BLUEPERCEMT = 0.3f;
+    final static float DEFAULT_WHITEPERCEMT = 0.1f;
+
+    private int liuDingSize = DEFAULT_LIUDING_SIZE;
+    private int theMatWidth = DEFAULT_MAT_WIDTH;
+    
+    private int colorThreshold = DEFAULT_COLORTHRESHOLD;
+
+    private float bluePercent = DEFAULT_BLUEPERCEMT;
+    private float whitePercent = DEFAULT_WHITEPERCEMT;
+
+    private boolean isDebug = false;
+    
 
     /**
      * 字符分割
@@ -53,7 +76,7 @@ public class CharsSegment {
 
         // 判断车牌颜色以此确认threshold方法
         Mat img_threshold = new Mat();
-        
+
         Mat input_grey = new Mat();
         cvtColor(input, input_grey, CV_RGB2GRAY);
 
@@ -408,28 +431,7 @@ public class CharsSegment {
         this.isDebug = isDebug;
     }
 
-    // 是否开启调试模式常量，默认false代表关闭
-    final static boolean DEFAULT_DEBUG = false;
 
-    // preprocessChar所用常量
-    final static int CHAR_SIZE = 20;
-    final static int HORIZONTAL = 1;
-    final static int VERTICAL = 0;
 
-    final static int DEFAULT_LIUDING_SIZE = 7;
-    final static int DEFAULT_MAT_WIDTH = 136;
 
-    final static int DEFAULT_COLORTHRESHOLD = 150;
-    final static float DEFAULT_BLUEPERCEMT = 0.3f;
-    final static float DEFAULT_WHITEPERCEMT = 0.1f;
-
-    private int liuDingSize = DEFAULT_LIUDING_SIZE;
-    private int theMatWidth = DEFAULT_MAT_WIDTH;
-
-    private int colorThreshold = DEFAULT_COLORTHRESHOLD;
-    
-    private float bluePercent = DEFAULT_BLUEPERCEMT;
-    private float whitePercent = DEFAULT_WHITEPERCEMT;
-
-    private boolean isDebug = DEFAULT_DEBUG;
 }

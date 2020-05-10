@@ -13,6 +13,11 @@ import com.yuxue.enumtype.PlateColor;
  * @date 2020-04-24 15:31
  */
 public class CharsRecognise {
+    
+    private CharsSegment charsSegment = new CharsSegment();
+
+    private CharsIdentify charsIdentify = new CharsIdentify();
+    
 
     public void loadANN(final String s) {
         charsIdentify.loadModel(s);
@@ -21,8 +26,7 @@ public class CharsRecognise {
     /**
      * Chars segment and identify 字符分割与识别
      * 
-     * @param plate
-     *            the input plate
+     * @param plate： the input plate
      * @return the result of plate recognition
      */
     public String charsRecognise(final Mat plate) {
@@ -128,7 +132,5 @@ public class CharsRecognise {
         return charsSegment.getWhitePercent();
     }
 
-    private CharsSegment charsSegment = new CharsSegment();
-
-    private CharsIdentify charsIdentify = new CharsIdentify();
+   
 }

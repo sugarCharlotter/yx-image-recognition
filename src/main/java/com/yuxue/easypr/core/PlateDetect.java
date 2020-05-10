@@ -13,8 +13,10 @@ import org.bytedeco.javacpp.opencv_core.Mat;
  */
 public class PlateDetect {
 
+    // 车牌定位， 图片处理对象
     private PlateLocate plateLocate = new PlateLocate();
 
+    // 切图判断对象
     private PlateJudge plateJudge = new PlateJudge();
 
     /**

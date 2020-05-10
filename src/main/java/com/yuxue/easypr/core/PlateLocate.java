@@ -101,7 +101,6 @@ public class PlateLocate {
 
     /**
      * 定位车牌图像
-     * 
      * @param src 原始图像
      * @return 一个Mat的向量，存储所有抓取到的图像
      */
@@ -269,7 +268,6 @@ public class PlateLocate {
 
     /**
      * 显示最终生成的车牌图像，便于判断是否成功进行了旋转。
-     * 
      * @param src
      * @param rect_size
      * @param center
@@ -361,7 +359,5 @@ public class PlateLocate {
     public boolean getDebug() {
         return debug;
     }
-    
-    
     
 }
