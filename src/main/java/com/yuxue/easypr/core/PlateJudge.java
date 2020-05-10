@@ -1,7 +1,7 @@
 package com.yuxue.easypr.core;
 
-import static org.bytedeco.javacpp.opencv_core.CV_32FC1;
-import static org.bytedeco.javacpp.opencv_imgproc.resize;
+import org.bytedeco.javacpp.opencv_core;
+import org.bytedeco.javacpp.opencv_imgproc;
 
 import java.util.Vector;
 
@@ -17,23 +17,27 @@ import org.bytedeco.javacpp.opencv_ml.SVM;
  * @date 2020-04-26 15:21
  */
 public class PlateJudge {
+    
+    private SVM svm = SVM.create();
+    
+    /**
+     * EasyPR的getFeatures回调函数, 用于从车牌的image生成svm的训练特征features
+     */
+    private SVMCallback features = new Features();
+
+    /**
+     * 模型存储路径
+     */
+    private String path = "res/model/svm.xml";
+    
 
     public PlateJudge() {
-        loadModel();
-    }
-
-    public void loadModel() {
-        loadModel(path);
-    }
-
-    public void loadModel(String s) {
         svm.clear();
-        svm=SVM.loadSVM(s, "svm");
+        svm=SVM.loadSVM(path, "svm");
     }
     
     /**
      * 对单幅图像进行SVM判断
-     * 
      * @param inMat
      * @return
      */
@@ -42,7 +46,7 @@ public class PlateJudge {
         
         // 通过直方图均衡化后的彩色图进行预测
         Mat p = features.reshape(1, 1);
-        p.convertTo(p, CV_32FC1);
+        p.convertTo(p, opencv_core.CV_32FC1);
         float ret = svm.predict(features);
        
         return (int) ret;
@@ -50,7 +54,6 @@ public class PlateJudge {
 
     /**
      * 对多幅图像进行SVM判断
-     * 
      * @param inVec
      * @param resultVec
      * @return
@@ -67,9 +70,8 @@ public class PlateJudge {
                 int h = inMat.rows();
 
                 Mat tmpDes = inMat.clone();
-                Mat tmpMat = new Mat(inMat, new Rect((int) (w * 0.05), (int) (h * 0.1), (int) (w * 0.9),
-                        (int) (h * 0.8)));
-                resize(tmpMat, tmpDes, new Size(inMat.size()));
+                Mat tmpMat = new Mat(inMat, new Rect((int) (w * 0.05), (int) (h * 0.1), (int) (w * 0.9), (int) (h * 0.8)));
+                opencv_imgproc.resize(tmpMat, tmpDes, new Size(inMat.size()));
 
                 if (plateJudge(tmpDes) == 1) {
                     resultVec.add(inMat);
@@ -79,6 +81,7 @@ public class PlateJudge {
         return 0;
     }
 
+    
     public void setModelPath(String path) {
         this.path = path;
     }
@@ -86,17 +89,5 @@ public class PlateJudge {
     public final String getModelPath() {
         return path;
     }
-
-    private SVM svm = SVM.create();
-
-
-    /**
-     * EasyPR的getFeatures回调函数, 用于从车牌的image生成svm的训练特征features
-     */
-    private SVMCallback features = new Features();
-
-    /**
-     * 模型存储路径
-     */
-    private String path = "res/model/svm.xml";
+    
 }
