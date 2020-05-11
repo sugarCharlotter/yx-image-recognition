@@ -18,8 +18,49 @@
 - 接口文档使用swagger 2.0
 
 #### 车牌识别流程
-- 操作界面
+- **操作界面**
 ![1.png](./res/doc_image/1.png)
+
+- **图片处理过程**
+debug_GaussianBlur：
+![1.png](./res/doc_image/debug_GaussianBlur.png)
+
+debug_gray：
+![1.png](./res/doc_image/debug_gray.png)
+
+debug_Sobel：
+![1.png](./res/doc_image/debug_Sobel.png)
+
+debug_threshold：
+![1.png](./res/doc_image/debug_threshold.png)
+
+debug_morphology：
+![1.png](./res/doc_image/debug_morphology.png)
+
+debug_Contours：
+![1.png](./res/doc_image/debug_Contours.png)
+
+debug_result：
+![1.png](./res/doc_image/debug_result.png)
+
+debug_crop：
+![1.png](./res/doc_image/debug_crop_1.png)
+![1.png](./res/doc_image/debug_crop_2.png)
+![1.png](./res/doc_image/debug_crop_3.png)
+![1.png](./res/doc_image/debug_crop_4.png)
+
+debug_resize：
+![1.png](./res/doc_image/debug_resize_1.png)
+![1.png](./res/doc_image/debug_resize_2.png)
+![1.png](./res/doc_image/debug_resize_3.png)
+![1.png](./res/doc_image/debug_resize_4.png)
+
+final_result:
+![1.png](./res/doc_image/result_0.png)
+
+
+- **图片车牌文字识别过程**
+
 
 
 #### 安装教程
