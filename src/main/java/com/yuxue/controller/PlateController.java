@@ -26,7 +26,7 @@ public class PlateController {
     @Autowired
     private PlateService service;
 
-    
+     
     /**
      * 扫描d:/PlateDetect目录图片的基础信息
      * 将扫描到的信息，更新到数据库
