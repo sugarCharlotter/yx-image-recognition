@@ -22,34 +22,44 @@
 ![1.png](./res/doc_image/1.png)
 
 - **图片处理过程**
+
 debug_GaussianBlur：
+
 ![1.png](./res/doc_image/debug_GaussianBlur.jpg)
 
 debug_gray：
+
 ![1.png](./res/doc_image/debug_gray.jpg)
 
 debug_Sobel：
+
 ![1.png](./res/doc_image/debug_Sobel.jpg)
 
 debug_threshold：
+
 ![1.png](./res/doc_image/debug_threshold.jpg)
 
 debug_morphology：
+
 ![1.png](./res/doc_image/debug_morphology.jpg)
 
 debug_Contours：
+
 ![1.png](./res/doc_image/debug_Contours.jpg)
 
 debug_result：
+
 ![1.png](./res/doc_image/debug_result.jpg)
 
 debug_crop：
+
 ![1.png](./res/doc_image/debug_crop_1.jpg)
 ![1.png](./res/doc_image/debug_crop_2.jpg)
 ![1.png](./res/doc_image/debug_crop_3.jpg)
 ![1.png](./res/doc_image/debug_crop_4.jpg)
 
 debug_resize：
+
 ![1.png](./res/doc_image/debug_resize_1.jpg)
 ![1.png](./res/doc_image/debug_resize_2.jpg)
 ![1.png](./res/doc_image/debug_resize_3.jpg)
@@ -61,6 +71,7 @@ debug_resize：
 待补齐
 
 final_result:
+
 ![1.png](./res/doc_image/result_0.jpg)
 
 
