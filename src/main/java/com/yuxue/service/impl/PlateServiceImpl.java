@@ -88,14 +88,12 @@ public class PlateServiceImpl implements PlateService {
                 plateFileMapper.insertSelective(e);
             }
             reRecognise = true;
+        } else {
+            e = list.get(0);
         }
 
         if(reRecognise) {
             doRecognise(f, e, 0); // 重新识别
-        }
-        if(null == e) {
-            e = list.get(0);
-        } else {
             e = plateFileMapper.selectByPrimaryKey(e.getId()); // 重新识别之后，重新获取一下数据
         }
 
