@@ -68,11 +68,12 @@ debug_resize：
 
 
 - **图片车牌文字识别过程**
+
 待补齐
 
 final_result:
 
-![1.png](./res/doc_image/result_0.jpg)
+![1.png](./res/doc_image/result_0.png)
 
 
 #### 安装教程
