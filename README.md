@@ -72,18 +72,23 @@ final_result:
 - **图片车牌文字识别过程**
 
 debug_char_threshold：
+
 ![1.png](./res/doc_image/debug_char_threshold.jpg)
 
 debug_char_clearLiuDing：
+
 ![1.png](./res/doc_image/debug_char_clearLiuDing.jpg)
 
 debug_specMat：
+
 ![1.png](./res/doc_image/debug_specMat.jpg)
 
 debug_chineseMat：
+
 ![1.png](./res/doc_image/debug_chineseMat.jpg)
 
 debug_char_auxRoi：
+
 ![1.png](./res/doc_image/debug_char_auxRoi_0.jpg)
 ![1.png](./res/doc_image/debug_char_auxRoi_1.jpg)
 ![1.png](./res/doc_image/debug_char_auxRoi_2.jpg)
