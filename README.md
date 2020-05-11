@@ -55,12 +55,13 @@ debug_resize：
 ![1.png](./res/doc_image/debug_resize_3.png)
 ![1.png](./res/doc_image/debug_resize_4.png)
 
-final_result:
-![1.png](./res/doc_image/result_0.png)
 
 
 - **图片车牌文字识别过程**
+待补齐
 
+final_result:
+![1.png](./res/doc_image/result_0.png)
 
 
 #### 安装教程
