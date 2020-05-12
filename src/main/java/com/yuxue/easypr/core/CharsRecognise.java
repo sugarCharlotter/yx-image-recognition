@@ -40,7 +40,7 @@ public class CharsRecognise {
         if (0 == result) {
             for (int j = 0; j < matVec.size(); j++) {
                 Mat charMat = matVec.get(j);
-                // 默认首个字符块是中文字符
+                // 默认首个字符块是中文字符   第二个字符块是字母
                 String charcater = charsIdentify.charsIdentify(charMat, (0 == j), (1 == j));
                 plateIdentify = plateIdentify + charcater;
             }

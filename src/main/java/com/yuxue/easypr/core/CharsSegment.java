@@ -124,18 +124,19 @@ public class CharsSegment {
                 CV_RETR_EXTERNAL, // retrieve the external contours
                 CV_CHAIN_APPROX_NONE); // all pixels of each contours
 
-        // Start to iterate to each contour founded
-
         // Remove patch that are no inside limits of aspect ratio and area.
         // 将不符合特定尺寸的图块排除出去
         Vector<Rect> vecRect = new Vector<Rect>();
         for (int i = 0; i < contours.size(); ++i) {
             Rect mr = boundingRect(contours.get(i));
-            /*Mat temp = new Mat(img_threshold, mr);
-            String str = tempPath + "temp_"+i+".jpg";
-            opencv_imgcodecs.imwrite(str, temp);*/
+            Mat contour = new Mat(img_threshold, mr);
             
-            if (verifySizes(new Mat(img_threshold, mr))) {
+            if (this.isDebug) {
+                String str = tempPath + "debug_char_contour"+i+".jpg";
+                opencv_imgcodecs.imwrite(str, contour);
+            }
+            
+            if (verifySizes(contour)) { // 将不符合特定尺寸的图块排除出去
                 vecRect.add(mr);
             }
         }
@@ -149,7 +150,6 @@ public class CharsSegment {
 
         // 获得指示城市的特定Rect,如苏A的"A"
         int specIndex = GetSpecificRect(sortedRect, color);
-        System.err.println(specIndex);
 
         if (this.isDebug) {
             if (specIndex < sortedRect.size()) {

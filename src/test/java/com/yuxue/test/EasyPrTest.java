@@ -1,22 +1,17 @@
 package com.yuxue.test;
 
-import static org.bytedeco.javacpp.opencv_imgproc.CV_CHAIN_APPROX_NONE;
-import static org.bytedeco.javacpp.opencv_imgproc.CV_RETR_EXTERNAL;
-import static org.bytedeco.javacpp.opencv_imgproc.boundingRect;
-import static org.bytedeco.javacpp.opencv_imgproc.findContours;
+import org.bytedeco.javacpp.opencv_imgproc;
 
 import java.io.File;
 import java.util.Vector;
 
 import org.bytedeco.javacpp.opencv_core.Mat;
-import org.bytedeco.javacpp.opencv_core.MatVector;
-import org.bytedeco.javacpp.opencv_core.Rect;
+import org.bytedeco.javacpp.opencv_highgui;
 import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.junit.Test;
 
 import com.yuxue.easypr.core.CharsIdentify;
 import com.yuxue.easypr.core.CharsRecognise;
-import com.yuxue.easypr.core.CharsSegment;
 import com.yuxue.easypr.core.CoreFunc;
 import com.yuxue.easypr.core.PlateDetect;
 import com.yuxue.easypr.core.PlateLocate;
@@ -185,8 +180,8 @@ public class EasyPrTest {
 
     @Test
     public void testGreenPlate() {
-        /*String imgPath = "res/image/test_image/result_0.png";
-        Mat src = opencv_imgcodecs.imread(imgPath);*/
+        String imgPath = "res/image/test_image/debug_resize_2.jpg";
+        Mat src = opencv_imgcodecs.imread(imgPath);
         
         // 获取绿牌的H值范围
         /*MatVector hsvSplit = new MatVector();
@@ -227,11 +222,32 @@ public class EasyPrTest {
         
         // 判断绿色车牌
         /*Mat src_hsv = new Mat();
-        cvtColor(src, src_hsv, CV_BGR2HSV);
+        opencv_imgproc.cvtColor(src, src_hsv, opencv_imgproc.CV_BGR2HSV);
         src_hsv = CoreFunc.colorMatch(src, PlateColor.GREEN, true);
         System.err.println(CoreFunc.plateColorJudge(src, PlateColor.GREEN, true));
         String str = "d:/PlateDetect/src_hsv.png";
         opencv_imgcodecs.imwrite(str, src_hsv);*/
+        
+        // 车牌检测对象
+        PlateDetect plateDetect = new PlateDetect();
+        plateDetect.setPDLifemode(true);
+        plateDetect.setDebug(false, ""); // 将过程的图块保存到盘符
+        
+        Vector<Mat> matVector = new Vector<Mat>();
+        
+        System.err.println(plateDetect.plateDetect(src, matVector));
+        System.err.println(matVector.size());
+        
+        for (int i = 0; i < matVector.size(); ++i) { // 遍历车牌图块Mat，进行识别
+            Mat img = matVector.get(i);
+            // 识别的车牌，保存图片文件
+            // 此方法生成的文件，中文名称都是乱码，试了各种编解码均无效，OpenCV自身的编解码问题。
+            opencv_highgui.imshow("123", img);
+            
+            String str = "d:/PlateDetect/temp/result_.png";
+            opencv_imgcodecs.imwrite(str, img);
+            
+        }
         
     }
     

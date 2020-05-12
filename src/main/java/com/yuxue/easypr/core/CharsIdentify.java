@@ -89,7 +89,7 @@ public class CharsIdentify {
 
     public void loadModel(String s) {
         this.ann.clear();
-        ann=ANN_MLP.loadANN_MLP(s, "ann"); // 加载ann配置文件
+        ann=ANN_MLP.loadANN_MLP(s, "ann"); // 加载ann配置文件  图像转文字的训练库文件
     }
 
 
@@ -118,7 +118,7 @@ public class CharsIdentify {
         int result = -1;
         Mat output = new Mat(1, numAll, CV_32FC1);
 
-        ann.predict(f, output, 0);
+        ann.predict(f, output, 0);  // 预测结果
 
         int ann_min = (!isChinses) ? ((isSpeci) ? 10 : 0) : numCharacter;
         int ann_max = (!isChinses) ? numCharacter : numAll;
@@ -133,7 +133,6 @@ public class CharsIdentify {
                 result = j;
             }
         }
-
         return result;
     }
 
