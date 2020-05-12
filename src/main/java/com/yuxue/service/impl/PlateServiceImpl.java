@@ -51,12 +51,11 @@ public class PlateServiceImpl implements PlateService {
         debugMap.put("debug_result", 6); // 原图处理结果
         debugMap.put("debug_crop", 7); // 切图
         debugMap.put("debug_resize", 8); // 切图resize
-        /*debugMap.put("debug_char_threshold", 9); // 
-        debugMap.put("debug_char_clearLiuDing", 10); // 去除柳钉
+        debugMap.put("debug_char_threshold", 9); // 
+        // debugMap.put("debug_char_clearLiuDing", 10); // 去除柳钉
         debugMap.put("debug_specMat", 11); // 
         debugMap.put("debug_chineseMat", 12); // 
         debugMap.put("debug_char_auxRoi", 13); // 
-        */    
     }
     
 
@@ -83,7 +82,7 @@ public class PlateServiceImpl implements PlateService {
             if(FileUtil.checkFile(f)) {
                 e = new PlateFileEntity();
                 e.setFileName(f.getName());
-                e.setFilePath(f.getAbsolutePath());
+                e.setFilePath(f.getAbsolutePath().replaceAll("\\\\", "/"));
                 e.setFileType(f.getName().substring(f.getName().lastIndexOf(".") + 1));
                 plateFileMapper.insertSelective(e);
             }
@@ -201,10 +200,11 @@ public class PlateServiceImpl implements PlateService {
         if (0 == plateDetect.plateDetect(src, matVector)) { // 定位及判断，获取到车牌图块Mat
 
             CharsRecognise cr = new CharsRecognise();
+            cr.setCRDebug(true);
             for (int i = 0; i < matVector.size(); ++i) { // 遍历车牌图块Mat，进行识别
                 Mat img = matVector.get(i);
 
-                String palte = cr.charsRecognise(img); // 字符识别
+                String palte = cr.charsRecognise(img, tempPath); // 字符识别
                 PlateColor color = CoreFunc.getPlateType(img, true);
                 String fileName = "result_" +  i + ".png";
 

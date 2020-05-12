@@ -19,14 +19,15 @@ import static org.bytedeco.javacpp.opencv_imgproc.warpAffine;
 
 import java.util.Vector;
 
+import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.MatVector;
 import org.bytedeco.javacpp.opencv_core.Rect;
 import org.bytedeco.javacpp.opencv_core.Scalar;
 import org.bytedeco.javacpp.opencv_core.Size;
-import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_imgcodecs;
 
+import com.yuxue.enumtype.PlateColor;
 import com.yuxue.util.Convert;
 
 /**
@@ -56,7 +57,7 @@ public class CharsSegment {
     private float bluePercent = DEFAULT_BLUEPERCEMT;
     private float whitePercent = DEFAULT_WHITEPERCEMT;
 
-    private boolean isDebug = false;
+    private boolean isDebug = true;
     
 
     /**
@@ -69,7 +70,7 @@ public class CharsSegment {
      *         <li>-3: null;
      *         </ul>
      */
-    public int charsSegment(final Mat input, Vector<Mat> resultVec) {
+    public int charsSegment(final Mat input, Vector<Mat> resultVec, String tempPath) {
         if (input.data().isNull()) {
             return -3;
         }
@@ -83,13 +84,18 @@ public class CharsSegment {
         int w = input.cols();
         int h = input.rows();
         Mat tmpMat = new Mat(input, new Rect((int) (w * 0.1), (int) (h * 0.1), (int) (w * 0.8), (int) (h * 0.8)));
-
-        switch (getPlateType(tmpMat, true)) {
+        
+        PlateColor color= getPlateType(tmpMat, true);
+        switch (color) {
         case BLUE:
             threshold(input_grey, img_threshold, 10, 255, CV_THRESH_OTSU + CV_THRESH_BINARY);
             break;
 
         case YELLOW:
+            threshold(input_grey, img_threshold, 10, 255, CV_THRESH_OTSU + CV_THRESH_BINARY_INV);
+            break;
+            
+        case GREEN:
             threshold(input_grey, img_threshold, 10, 255, CV_THRESH_OTSU + CV_THRESH_BINARY_INV);
             break;
 
@@ -98,16 +104,15 @@ public class CharsSegment {
         }
 
         if (this.isDebug) {
-            opencv_imgcodecs.imwrite("tmp/debug_char_threshold.jpg", img_threshold);
+            opencv_imgcodecs.imwrite(tempPath + "debug_char_threshold.jpg", img_threshold);
         }
 
         // 去除车牌上方的柳钉以及下方的横线等干扰  //会导致虚拟机崩溃
         // clearLiuDing(img_threshold);
-
-        if (this.isDebug) {
-            String str = "tmp/debug_char_clearLiuDing.jpg";
+        /*if (this.isDebug) {
+            String str = tempPath + "debug_char_clearLiuDing.jpg";
             opencv_imgcodecs.imwrite(str, img_threshold);
-        }
+        }*/
 
         // 找轮廓
         Mat img_contours = new Mat();
@@ -126,10 +131,14 @@ public class CharsSegment {
         Vector<Rect> vecRect = new Vector<Rect>();
         for (int i = 0; i < contours.size(); ++i) {
             Rect mr = boundingRect(contours.get(i));
-            if (verifySizes(new Mat(img_threshold, mr)))
+            /*Mat temp = new Mat(img_threshold, mr);
+            String str = tempPath + "temp_"+i+".jpg";
+            opencv_imgcodecs.imwrite(str, temp);*/
+            
+            if (verifySizes(new Mat(img_threshold, mr))) {
                 vecRect.add(mr);
+            }
         }
-
         if (vecRect.size() == 0) {
             return -3;
         }
@@ -139,19 +148,20 @@ public class CharsSegment {
         SortRect(vecRect, sortedRect);
 
         // 获得指示城市的特定Rect,如苏A的"A"
-        int specIndex = GetSpecificRect(sortedRect);
+        int specIndex = GetSpecificRect(sortedRect, color);
+        System.err.println(specIndex);
 
         if (this.isDebug) {
             if (specIndex < sortedRect.size()) {
                 Mat specMat = new Mat(img_threshold, sortedRect.get(specIndex));
-                String str = "tmp/debug_specMat.jpg";
+                String str = tempPath + "debug_specMat.jpg";
                 opencv_imgcodecs.imwrite(str, specMat);
             }
         }
 
         // 根据特定Rect向左反推出中文字符
         // 这样做的主要原因是根据findContours方法很难捕捉到中文字符的准确Rect，因此仅能
-        // 退过特定算法来指定
+        // 通过特定算法来指定
         Rect chineseRect = new Rect();
         if (specIndex < sortedRect.size()) {
             chineseRect = GetChineseRect(sortedRect.get(specIndex));
@@ -161,7 +171,7 @@ public class CharsSegment {
 
         if (this.isDebug) {
             Mat chineseMat = new Mat(img_threshold, chineseRect);
-            String str = "tmp/debug_chineseMat.jpg";
+            String str = tempPath + "debug_chineseMat.jpg";
             opencv_imgcodecs.imwrite(str, chineseMat);
         }
 
@@ -170,7 +180,7 @@ public class CharsSegment {
         // 其余的Rect只按照顺序去6个，车牌只可能是7个字符！这样可以避免阴影导致的“1”字符
         Vector<Rect> newSortedRect = new Vector<Rect>();
         newSortedRect.add(chineseRect);
-        RebuildRect(sortedRect, newSortedRect, specIndex);
+        RebuildRect(sortedRect, newSortedRect, specIndex, color);
 
         if (newSortedRect.size() == 0) {
             return -3;
@@ -182,7 +192,7 @@ public class CharsSegment {
 
             auxRoi = preprocessChar(auxRoi);
             if (this.isDebug) {
-                String str = "tmp/debug_char_auxRoi_" + Integer.valueOf(i).toString() + ".jpg";
+                String str = tempPath + "debug_char_auxRoi_" + Integer.valueOf(i).toString() + ".jpg";
                 opencv_imgcodecs.imwrite(str, auxRoi);
             }
             resultVec.add(auxRoi);
@@ -191,12 +201,11 @@ public class CharsSegment {
     }
 
     /**
-     * 字符尺寸验证
-     * 
+     * 字符尺寸验证；去掉尺寸不符合的图块
      * @param r
      * @return
      */
-    private Boolean verifySizes(Mat r) {
+    public static Boolean verifySizes(Mat r) {
         float aspect = 45.0f / 90.0f;
         float charAspect = (float) r.cols() / (float) r.rows();
         float error = 0.7f;
@@ -212,8 +221,7 @@ public class CharsSegment {
         // % of pixel in area
         float percPixels = area / bbArea;
 
-        return percPixels <= 1 && charAspect > minAspect && charAspect < maxAspect && r.rows() >= minHeight
-                && r.rows() < maxHeight;
+        return percPixels <= 1 && charAspect > minAspect && charAspect < maxAspect && r.rows() >= minHeight && r.rows() < maxHeight;
     }
 
     /**
@@ -290,11 +298,10 @@ public class CharsSegment {
 
     /**
      * 找出指示城市的字符的Rect，例如苏A7003X，就是A的位置
-     * 
      * @param vecRect
      * @return
      */
-    private int GetSpecificRect(final Vector<Rect> vecRect) {
+    private int GetSpecificRect(final Vector<Rect> vecRect, PlateColor color) {
         Vector<Integer> xpositions = new Vector<Integer>();
         int maxHeight = 0;
         int maxWidth = 0;
@@ -314,10 +321,17 @@ public class CharsSegment {
             Rect mr = vecRect.get(i);
             int midx = mr.x() + mr.width() / 2;
 
-            // 如果一个字符有一定的大小，并且在整个车牌的1/7到2/7之间，则是我们要找的特殊车牌
-            if ((mr.width() > maxWidth * 0.8 || mr.height() > maxHeight * 0.8)
-                    && (midx < this.theMatWidth * 2 / 7 && midx > this.theMatWidth / 7)) {
-                specIndex = i;
+            if(PlateColor.GREEN.equals(color)) {
+                if ((mr.width() > maxWidth * 0.8 || mr.height() > maxHeight * 0.8)
+                        && (midx < this.theMatWidth * 2 / 8 && midx > this.theMatWidth / 8)) {
+                    specIndex = i;
+                }
+            } else {
+                // 如果一个字符有一定的大小，并且在整个车牌的1/7到2/7之间，则是我们要找的特殊车牌
+                if ((mr.width() > maxWidth * 0.8 || mr.height() > maxHeight * 0.8)
+                        && (midx < this.theMatWidth * 2 / 7 && midx > this.theMatWidth / 7)) {
+                    specIndex = i;
+                } 
             }
         }
 
@@ -336,9 +350,12 @@ public class CharsSegment {
      * @param specIndex
      * @return
      */
-    private int RebuildRect(final Vector<Rect> vecRect, Vector<Rect> outRect, int specIndex) {
+    private int RebuildRect(final Vector<Rect> vecRect, Vector<Rect> outRect, int specIndex, PlateColor color) {
         // 最大只能有7个Rect,减去中文的就只有6个Rect
         int count = 6;
+        if(PlateColor.GREEN.equals(color)) {
+            count = 7; // 绿牌要多一个
+        }
         for (int i = 0; i < vecRect.size(); i++) {
             // 将特殊字符左边的Rect去掉，这个可能会去掉中文Rect，不过没关系，我们后面会重建。
             if (i < specIndex)
@@ -359,7 +376,7 @@ public class CharsSegment {
      * @param out
      * @return
      */
-    private void SortRect(final Vector<Rect> vecRect, Vector<Rect> out) {
+    public static void SortRect(final Vector<Rect> vecRect, Vector<Rect> out) {
         Vector<Integer> orderIndex = new Vector<Integer>();
         Vector<Integer> xpositions = new Vector<Integer>();
         for (int i = 0; i < vecRect.size(); ++i) {
@@ -430,8 +447,6 @@ public class CharsSegment {
     public void setDebug(boolean isDebug) {
         this.isDebug = isDebug;
     }
-
-
 
 
 }

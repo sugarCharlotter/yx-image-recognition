@@ -1,14 +1,22 @@
 package com.yuxue.test;
 
+import static org.bytedeco.javacpp.opencv_imgproc.CV_CHAIN_APPROX_NONE;
+import static org.bytedeco.javacpp.opencv_imgproc.CV_RETR_EXTERNAL;
+import static org.bytedeco.javacpp.opencv_imgproc.boundingRect;
+import static org.bytedeco.javacpp.opencv_imgproc.findContours;
+
 import java.io.File;
 import java.util.Vector;
 
 import org.bytedeco.javacpp.opencv_core.Mat;
+import org.bytedeco.javacpp.opencv_core.MatVector;
+import org.bytedeco.javacpp.opencv_core.Rect;
 import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.junit.Test;
 
 import com.yuxue.easypr.core.CharsIdentify;
 import com.yuxue.easypr.core.CharsRecognise;
+import com.yuxue.easypr.core.CharsSegment;
 import com.yuxue.easypr.core.CoreFunc;
 import com.yuxue.easypr.core.PlateDetect;
 import com.yuxue.easypr.core.PlateLocate;
@@ -49,7 +57,7 @@ public class EasyPrTest {
             for (int i = 0; i < matVector.size(); ++i) { // 遍历检测返回的Mat集合，进行识别
                 Mat img = matVector.get(i);
 
-                String palte = cr.charsRecognise(img); // 字符识别
+                String palte = cr.charsRecognise(img, "tem/"); // 字符识别
                 PlateColor color = CoreFunc.getPlateType(img, true);
 
                 System.err.println("识别到的车牌: " + palte + "_" + color);
@@ -86,7 +94,7 @@ public class EasyPrTest {
             for (int i = 0; i < matVector.size(); ++i) {
                 Mat img = matVector.get(i);
                 // 弹窗显示
-                //opencv_imgcodecs.showImage("Plate Detected", img);
+                //opencv_highgui.imshow("Plate Detected", img);
 
                 String str = "d:/test/" + i + ".png";
                 opencv_imgcodecs.imwrite(str, img);
@@ -134,7 +142,7 @@ public class EasyPrTest {
         Mat src = opencv_imgcodecs.imread(imgPath);
         CharsRecognise cr = new CharsRecognise();
         cr.setCRDebug(true);
-        String result = cr.charsRecognise(src);
+        String result = cr.charsRecognise(src, "tem/");
         System.out.println("Chars Recognised: " + result);
     }
 
@@ -175,6 +183,58 @@ public class EasyPrTest {
         System.out.println(result);
     }
 
+    @Test
+    public void testGreenPlate() {
+        /*String imgPath = "res/image/test_image/result_0.png";
+        Mat src = opencv_imgcodecs.imread(imgPath);*/
+        
+        // 获取绿牌的H值范围
+        /*MatVector hsvSplit = new MatVector();
+        split(src_hsv, hsvSplit);
+        equalizeHist(hsvSplit.get(2), hsvSplit.get(2));
+        merge(hsvSplit, src_hsv);
+
+        int channels = src_hsv.channels();
+        int nRows = src_hsv.rows();
+        // 图像数据列需要考虑通道数的影响；
+        int nCols = src_hsv.cols() * channels;
+
+        // 连续存储的数据，按一行处理
+        if (src_hsv.isContinuous()) {
+            nCols *= nRows;
+            nRows = 1;
+        }
+        Map<Integer, Integer> map = Maps.newHashMap();
+        for (int i = 0; i < nRows; ++i) {
+            BytePointer p = src_hsv.ptr(i);
+            for (int j = 0; j < nCols; j += 3) {
+                int H = p.get(j) & 0xFF;
+                int S = p.get(j + 1) & 0xFF;
+                int V = p.get(j + 2) & 0xFF;
+
+                if(map.containsKey(H)) {
+                    int count = map.get(H);
+                    map.put(H, count+1);
+                } else {
+                    map.put(H, 1);
+                }
+                
+            }
+        }
+        map.entrySet().forEach(n->{
+            System.err.println(n.getKey() + "\t" + n.getValue());
+        });*/
+        
+        // 判断绿色车牌
+        /*Mat src_hsv = new Mat();
+        cvtColor(src, src_hsv, CV_BGR2HSV);
+        src_hsv = CoreFunc.colorMatch(src, PlateColor.GREEN, true);
+        System.err.println(CoreFunc.plateColorJudge(src, PlateColor.GREEN, true));
+        String str = "d:/PlateDetect/src_hsv.png";
+        opencv_imgcodecs.imwrite(str, src_hsv);*/
+        
+    }
+    
 
 
 

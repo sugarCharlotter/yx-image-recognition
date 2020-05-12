@@ -29,14 +29,14 @@ public class CharsRecognise {
      * @param plate： the input plate
      * @return the result of plate recognition
      */
-    public String charsRecognise(final Mat plate) {
+    public String charsRecognise(final Mat plate, String tempPath) {
 
         // 车牌字符方块集合
         Vector<Mat> matVec = new Vector<Mat>();
         // 车牌识别结果
         String plateIdentify = "";
 
-        int result = charsSegment.charsSegment(plate, matVec);
+        int result = charsSegment.charsSegment(plate, matVec, tempPath);
         if (0 == result) {
             for (int j = 0; j < matVec.size(); j++) {
                 Mat charMat = matVec.get(j);

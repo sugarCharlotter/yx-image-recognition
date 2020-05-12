@@ -11,14 +11,14 @@ define(['api', 'utils'], function(api, utils){
         bindBtnEvent();
 
         // 监听按钮事件
-        $('body').keydown(function (e) {
+        /*$('body').keydown(function (e) {
             if (event.keyCode==116){ //回车键 //F5按键
                 e.preventDefault();
                 setTimeout(function () {
                     $("#refreshPlate").trigger('click');
                 }, 200);
             }
-        });
+        });*/
 
     }
 

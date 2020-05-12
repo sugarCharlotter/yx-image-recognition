@@ -59,8 +59,8 @@ public class CoreFunc {
         final int max_yellow = 40;
         
         // green的H范围
-        final int min_green = 38;
-        final int max_green = 75;
+        final int min_green = 8;
+        final int max_green = 150;
         
         // 转到HSV空间进行处理，颜色搜索主要使用的是H分量进行蓝色与黄色的匹配工作
         Mat src_hsv = new Mat();
