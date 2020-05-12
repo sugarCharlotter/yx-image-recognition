@@ -36,7 +36,6 @@ public class EasyPrTest {
      */
     @Test
     public void testPlateRecognise() {
-        //String imgPath = "res/image/test_image/test.jpg";
         String imgPath = "res/image/test_image/plate_recognize.jpg";
 
         Mat src = opencv_imgcodecs.imread(imgPath);
@@ -55,7 +54,7 @@ public class EasyPrTest {
                 String palte = cr.charsRecognise(img, "tem/"); // 字符识别
                 PlateColor color = CoreFunc.getPlateType(img, true);
 
-                System.err.println("识别到的车牌: " + palte + "_" + color);
+                System.err.println("识别到的车牌: " + palte + "_" + color.desc);
                 // 识别的车牌，保存图片文件 //需要先创建文件夹
                 String str = "d:/PlateDetect/" + palte + "_"+ color + "_" + System.currentTimeMillis() +".png";
                 String str1 = "d:/PlateDetect/" + i + ".png";
@@ -89,7 +88,7 @@ public class EasyPrTest {
             for (int i = 0; i < matVector.size(); ++i) {
                 Mat img = matVector.get(i);
                 // 弹窗显示
-                //opencv_highgui.imshow("Plate Detected", img);
+                opencv_highgui.imshow("Plate Detected", img);
 
                 String str = "d:/test/" + i + ".png";
                 opencv_imgcodecs.imwrite(str, img);
@@ -178,11 +177,17 @@ public class EasyPrTest {
         System.out.println(result);
     }
 
+
+
+
+    /**
+     * 测试检测绿牌颜色
+     */
     @Test
-    public void testGreenPlate() {
+    public void testGreenColorReco() {
         String imgPath = "res/image/test_image/debug_resize_2.jpg";
         Mat src = opencv_imgcodecs.imread(imgPath);
-        
+
         // 获取绿牌的H值范围
         /*MatVector hsvSplit = new MatVector();
         split(src_hsv, hsvSplit);
@@ -213,44 +218,47 @@ public class EasyPrTest {
                 } else {
                     map.put(H, 1);
                 }
-                
+
             }
         }
         map.entrySet().forEach(n->{
             System.err.println(n.getKey() + "\t" + n.getValue());
         });*/
-        
+
         // 判断绿色车牌
-        /*Mat src_hsv = new Mat();
+        Mat src_hsv = new Mat();
         opencv_imgproc.cvtColor(src, src_hsv, opencv_imgproc.CV_BGR2HSV);
         src_hsv = CoreFunc.colorMatch(src, PlateColor.GREEN, true);
         System.err.println(CoreFunc.plateColorJudge(src, PlateColor.GREEN, true));
         String str = "d:/PlateDetect/src_hsv.png";
-        opencv_imgcodecs.imwrite(str, src_hsv);*/
-        
+        opencv_imgcodecs.imwrite(str, src_hsv);
+    }
+
+    @Test
+    public void testGreenPlate() {
+        String imgPath = "res/image/test_image/debug_resize_2.jpg";
+        Mat src = opencv_imgcodecs.imread(imgPath);
+
         // 车牌检测对象
         PlateDetect plateDetect = new PlateDetect();
         plateDetect.setPDLifemode(true);
         plateDetect.setDebug(false, ""); // 将过程的图块保存到盘符
-        
+
         Vector<Mat> matVector = new Vector<Mat>();
-        
+
         System.err.println(plateDetect.plateDetect(src, matVector));
         System.err.println(matVector.size());
-        
+
         for (int i = 0; i < matVector.size(); ++i) { // 遍历车牌图块Mat，进行识别
             Mat img = matVector.get(i);
-            // 识别的车牌，保存图片文件
-            // 此方法生成的文件，中文名称都是乱码，试了各种编解码均无效，OpenCV自身的编解码问题。
-            opencv_highgui.imshow("123", img);
-            
+
             String str = "d:/PlateDetect/temp/result_.png";
             opencv_imgcodecs.imwrite(str, img);
-            
+
         }
-        
+
     }
-    
+
 
 
 
