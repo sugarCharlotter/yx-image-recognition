@@ -15,6 +15,8 @@ import org.opencv.ml.SVM;
  * 3、eclipse添加User Libraries
  * 4、项目右键build path，添加步骤三新增的lib
  * 
+ * https://blog.csdn.net/marooon/article/details/80265247
+ * 
  * 未完待续
  * @author yuxue
  * @date 2020-05-12 21:34
