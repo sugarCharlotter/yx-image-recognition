@@ -28,7 +28,7 @@ import com.yuxue.enumtype.PlateColor;
  * @author yuxue
  * @date 2020-04-19 21:20
  */
-public class EasyPrTest {
+public class PlateRecoTest {
 
     /**
      * 图片车牌识别
