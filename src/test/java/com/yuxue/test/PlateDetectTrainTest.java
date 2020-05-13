@@ -41,10 +41,10 @@ public class PlateDetectTrainTest {
         // 用于存放所有样本矩阵
         Mat trainingDataMat = null;
         
-        // 正样本  // 136 × 36 像素
+        // 正样本  // 136 × 36 像素  训练的源图像文件要相同大小
         List<File> imgList1 = FileUtil.listFile(new File(DEFAULT_PATH + "/learn/HasPlate"), Constant.DEFAULT_TYPE, false);
         
-        // 负样本   // 136 × 36 像素
+        // 负样本   // 136 × 36 像素 训练的源图像文件要相同大小
         List<File> imgList2 = FileUtil.listFile(new File(DEFAULT_PATH + "/learn/NoPlate"), Constant.DEFAULT_TYPE, false);
  
         // 标记：正样本用 0 表示，负样本用 1 表示。

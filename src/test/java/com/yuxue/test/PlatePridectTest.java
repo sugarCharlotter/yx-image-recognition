@@ -35,8 +35,11 @@ public class PlatePridectTest {
         String module = DEFAULT_PATH + "svm.xml";
         SVM svm = SVM.load(module); // 加载训练得到的 xml 模型文件
         
-        // 136 × 36 像素
+        // 136 × 36 像素   需要跟训练的源图像文件保持相同大小
         pridect(svm, DEFAULT_PATH + "test/A01_NMV802_0.jpg");
+        pridect(svm, DEFAULT_PATH + "test/debug_resize_1.jpg");
+        pridect(svm, DEFAULT_PATH + "test/debug_resize_2.jpg");
+        pridect(svm, DEFAULT_PATH + "test/debug_resize_3.jpg");
         pridect(svm, DEFAULT_PATH + "test/S22_KG2187_3.jpg");
         pridect(svm, DEFAULT_PATH + "test/S22_KG2187_5.jpg");
         
