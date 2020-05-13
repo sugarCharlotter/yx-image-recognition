@@ -38,20 +38,22 @@ public class PlateDetectTrainTest {
     }
 
     public static void main(String[] arg) {
-        // 用于存放所有样本矩阵
-        Mat trainingDataMat = null;
-        
+
+
         // 正样本  // 136 × 36 像素  训练的源图像文件要相同大小
         List<File> imgList1 = FileUtil.listFile(new File(DEFAULT_PATH + "/learn/HasPlate"), Constant.DEFAULT_TYPE, false);
-        
+
         // 负样本   // 136 × 36 像素 训练的源图像文件要相同大小
         List<File> imgList2 = FileUtil.listFile(new File(DEFAULT_PATH + "/learn/NoPlate"), Constant.DEFAULT_TYPE, false);
- 
+
         // 标记：正样本用 0 表示，负样本用 1 表示。
         int labels[] = createLabelArray(imgList1.size(), imgList2.size());
-        
+
         // 图片数量
         int sample_num = labels.length;
+
+        // 用于存放所有样本矩阵
+        Mat trainingDataMat = null;
         
         // 存放标记的Mat,每个图片都要给一个标记
         Mat labelsMat = new Mat(sample_num, 1, CvType.CV_32SC1);
@@ -66,14 +68,13 @@ public class PlateDetectTrainTest {
             } else {
                 path = imgList2.get(i - imgList1.size()).getAbsolutePath(); 
             }
-            
-            Mat src = Imgcodecs.imread(path);
 
-            // 创建一个行数为18(正负样本总数量为18),列数为 rows*cols 的矩阵
+            Mat src = Imgcodecs.imread(path);
+            
+            // 创建一个行数为sample_num, 列数为 rows*cols 的矩阵
             if (trainingDataMat == null) {
                 trainingDataMat = new Mat(sample_num, src.rows() * src.cols(), CvType.CV_32FC1);// CV_32FC1 是规定的训练用的图片格式。
             }
-
             // 转成灰度图并检测边缘 // 这里是为了过滤不需要的特征，减少训练时间。实际处理按情况论。
             Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY); // 转成灰度图
             Mat dst = new Mat(src.rows(), src.cols(), src.type());// 此时的 dst 是8u1c。
@@ -104,7 +105,7 @@ public class PlateDetectTrainTest {
      * @param labelsMat 存放标识的矩阵
      */
     public static void MySvm(Mat trainingDataMat, Mat labelsMat, String savePath) {
-        
+
         // 配置SVM训练器参数
         TermCriteria criteria = new TermCriteria(TermCriteria.EPS + TermCriteria.MAX_ITER, 20000, 0.0001);
         SVM svm = SVM.create();
@@ -121,14 +122,14 @@ public class PlateDetectTrainTest {
         TrainData td = TrainData.create(trainingDataMat, Ml.ROW_SAMPLE, labelsMat);// 类封装的训练数据
         boolean success = svm.train(td.getSamples(), Ml.ROW_SAMPLE, td.getResponses());// 训练统计模型
         System.err.println("Svm training result: " + success);
-        
+
         svm.save(savePath);// 保存模型
     }
-    
-    
+
+
     public static int[] createLabelArray(Integer i1, Integer i2) {
         int labels[] = new int[i1 + i2];
-        
+
         for (int i = 0; i < labels.length; i++) {
             if(i < i1) {
                 labels[i] = 0;

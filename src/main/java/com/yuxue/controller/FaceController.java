@@ -4,6 +4,8 @@ import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 /**
@@ -18,25 +20,20 @@ public class FaceController {
     }
 
     public static void main(String[] args) {
-        FaceController demo = new FaceController();
-        demo.run();
-    }
-
-    public void run() {
-
-        // Create a face detector from the cascade file in the resources directory.
-        // 创建识别器
-        CascadeClassifier faceDetector = new CascadeClassifier(getClass().getResource("/haarcascades/lbpcascade_frontalface.xml").getPath());
-
-        String imgPath = "/src/main/resources/DetectFace/huge.jpg";
-        Mat image = null; //Highgui.imread(imgPath,3);
         
-        String filename = "D:/DetectFace/huge1.png";
-        // System.out.println(String.format("Writing %s", filename));
+     // Create a face detector from the cascade file in the resources directory.
+        // 创建识别器
+        CascadeClassifier faceDetector = new CascadeClassifier("/src/main/resources/haarcascades/lbpcascade_frontalface.xml");
+
+        String imgPath = "/src/main/resources/DetectFace/AverageMaleFace.jpg";
+        Mat image = Imgcodecs.imread(imgPath);
+        
+        Mat dst = new Mat();
+        Imgproc.Canny(image, dst, 130, 250);
 
         // Detect faces in the image. MatOfRect is a special container class for Rect.
         MatOfRect faceDetections = new MatOfRect();
-        faceDetector.detectMultiScale(image, faceDetections);
+        faceDetector.detectMultiScale(dst, faceDetections);
 
         System.out.println(String.format("识别出 %s 张人脸", faceDetections.toArray().length));
 
@@ -48,6 +45,5 @@ public class FaceController {
         // Save the visualized detection.
         // System.out.println(String.format("Writing %s", filename));
         //Highgui.imwrite(filename, image);
-        return;
     }
 }

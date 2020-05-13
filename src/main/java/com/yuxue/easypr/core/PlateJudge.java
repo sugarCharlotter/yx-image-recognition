@@ -9,6 +9,9 @@ import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.Rect;
 import org.bytedeco.javacpp.opencv_core.Size;
 import org.bytedeco.javacpp.opencv_ml.SVM;
+import org.opencv.core.CvType;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 
 /**
@@ -17,9 +20,9 @@ import org.bytedeco.javacpp.opencv_ml.SVM;
  * @date 2020-04-26 15:21
  */
 public class PlateJudge {
-    
+
     private SVM svm = SVM.create();
-    
+
     /**
      * EasyPR的getFeatures回调函数, 用于从车牌的image生成svm的训练特征features
      */
@@ -29,13 +32,14 @@ public class PlateJudge {
      * 模型存储路径
      */
     private String path = "res/model/svm.xml";
-    
+
 
     public PlateJudge() {
         svm.clear();
-        svm=SVM.loadSVM(path, "svm");
+        // svm=SVM.loadSVM(path, "svm");
+        svm=SVM.load(path);
     }
-    
+
     /**
      * 对单幅图像进行SVM判断
      * @param inMat
@@ -43,13 +47,21 @@ public class PlateJudge {
      */
     public int plateJudge(final Mat inMat) {
         Mat features = this.features.getHistogramFeatures(inMat);
-        
         // 通过直方图均衡化后的彩色图进行预测
         Mat p = features.reshape(1, 1);
         p.convertTo(p, opencv_core.CV_32FC1);
         float ret = svm.predict(features);
-       
         return (int) ret;
+
+        /*opencv_imgproc.cvtColor(inMat, inMat, Imgproc.COLOR_BGR2GRAY);
+        Mat features = new Mat();
+        opencv_imgproc.Canny(inMat, features, 130, 250);
+
+        Mat p = features.reshape(1, 1);
+        p.convertTo(p, opencv_core.CV_32FC1);
+
+        float ret = svm.predict(p);
+        return (int) ret;*/
     }
 
     /**
@@ -81,7 +93,7 @@ public class PlateJudge {
         return 0;
     }
 
-    
+
     public void setModelPath(String path) {
         this.path = path;
     }
@@ -89,5 +101,5 @@ public class PlateJudge {
     public final String getModelPath() {
         return path;
     }
-    
+
 }
