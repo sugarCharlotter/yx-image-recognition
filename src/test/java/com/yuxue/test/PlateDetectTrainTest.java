@@ -39,7 +39,6 @@ public class PlateDetectTrainTest {
 
     public static void main(String[] arg) {
 
-
         // 正样本  // 136 × 36 像素  训练的源图像文件要相同大小
         List<File> imgList1 = FileUtil.listFile(new File(DEFAULT_PATH + "/learn/HasPlate"), Constant.DEFAULT_TYPE, false);
 
@@ -84,14 +83,14 @@ public class PlateDetectTrainTest {
             // 失败案例:这里我试图用 get(row,col,data)方法获取数组，但是结果和这个结果不一样，原因未知。
             float[] arr = new float[dst.rows() * dst.cols()];
             int l = 0;
-            for (int j = 0; j < dst.rows(); j++) {
-                for (int k = 0; k < dst.cols(); k++) {
+            for (int j = 0; j < dst.rows(); j++) { // 遍历行
+                for (int k = 0; k < dst.cols(); k++) { // 遍历列
                     double[] a = dst.get(j, k);
                     arr[l] = (float) a[0];
                     l++;
                 }
             }
-            trainingDataMat.put(i, 0, arr);
+            trainingDataMat.put(i, 0, arr); // 多张图合并到一张
         }
 
         String module = DEFAULT_PATH + "svm.xml";

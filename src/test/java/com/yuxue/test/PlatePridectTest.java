@@ -1,5 +1,6 @@
 package com.yuxue.test;
 
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -50,21 +51,23 @@ public class PlatePridectTest {
         Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
         Mat dst = new Mat();
         Imgproc.Canny(src, dst, 130, 250);
-
-        Mat samples = new Mat(1, dst.cols() * dst.rows(), CvType.CV_32FC1);
-
-        // 转换 src 图像的 cvtype
-        // 失败案例：我试图用 dst.convertTo(src, CvType.CV_32FC1); 转换，但是失败了，原因未知。猜测: 内部的数据类型没有转换？
-        float[] dataArr = new float[dst.cols() * dst.rows()];
-        for (int i = 0, f = 0; i < dst.rows(); i++) {
-            for (int j = 0; j < dst.cols(); j++) {
-                double pixel = dst.get(i, j)[0];
-                dataArr[f] = (float) pixel;
-                f++;
+        
+        Mat samples = dst.reshape(1, 1);
+        samples.convertTo(samples, CvType.CV_32FC1);
+        // 等价于上面两行代码
+        /*Mat samples = new Mat(1, dst.cols() * dst.rows(), CvType.CV_32FC1);
+        float[] arr = new float[dst.cols() * dst.rows()];
+        int l = 0;
+        for (int j = 0; j < dst.rows(); j++) { // 遍历行
+            for (int k = 0; k < dst.cols(); k++) { // 遍历列
+                double[] a = dst.get(j, k);
+                arr[l] = (float) a[0];
+                l++;
             }
         }
+        samples.put(0, 0, arr);*/
+        Imgcodecs.imwrite(DEFAULT_PATH + "test_1.jpg", samples);
         
-        samples.put(0, 0, dataArr);
 
         // 如果训练时使用这个标识，那么符合的图像会返回9.0
         float flag = svm.predict(samples);

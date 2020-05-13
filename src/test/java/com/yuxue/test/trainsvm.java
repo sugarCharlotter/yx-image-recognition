@@ -37,13 +37,13 @@ public class trainsvm {
 		openFile(1, DEFAULT_PATH + "/learn/HasPlate");
 		openFile(0, DEFAULT_PATH + "/learn/NoPlate");
 		Mat srcImgs = new Mat();
-		Mat flags = new Mat(trainingLabels.size(), 1, CvType.CV_32SC1);
+		Mat labelsMat = new Mat(trainingLabels.size(), 1, CvType.CV_32SC1);
 		
 		Core.vconcat(trainingImages, srcImgs);    // 样本数量不能太大，trainingImages.size有限制
 		
 		for (int i = 0; i < trainingLabels.size(); i++) {
 			int[] val = { trainingLabels.get(i) };
-			flags.put(i, 0, val);
+			labelsMat.put(i, 0, val);
 		}
 		SVM svm = SVM.create();
 		svm.setKernel(SVM.LINEAR);
@@ -54,7 +54,7 @@ public class trainsvm {
 		svm.setNu(0);
 		svm.setP(0);
 		svm.setTermCriteria(new TermCriteria(TermCriteria.MAX_ITER, 20000, 0.0001));
-		TrainData trainData = TrainData.create(srcImgs, Ml.ROW_SAMPLE, flags);
+		TrainData trainData = TrainData.create(srcImgs, Ml.ROW_SAMPLE, labelsMat);
 		boolean success = svm.train(trainData);
 		System.out.println(success);
 		svm.save( DEFAULT_PATH + "svm.xml");

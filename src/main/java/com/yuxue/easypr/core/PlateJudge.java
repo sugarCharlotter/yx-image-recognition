@@ -9,9 +9,6 @@ import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.Rect;
 import org.bytedeco.javacpp.opencv_core.Size;
 import org.bytedeco.javacpp.opencv_ml.SVM;
-import org.opencv.core.CvType;
-import org.opencv.imgcodecs.Imgcodecs;
-import org.opencv.imgproc.Imgproc;
 
 
 /**
@@ -52,16 +49,20 @@ public class PlateJudge {
         p.convertTo(p, opencv_core.CV_32FC1);
         float ret = svm.predict(features);
         return (int) ret;
+        
+        /*// 使用com.yuxue.test.PlateDetectTrainTest 生成的训练库文件
+        // 在使用的过程中，传入的样本切图要跟训练的时候处理切图的方法一致
+        Mat grayImage = new Mat();
+        opencv_imgproc.cvtColor(inMat, grayImage, opencv_imgproc.CV_RGB2GRAY);
+        Mat dst = new Mat();
+        opencv_imgproc.Canny(grayImage, dst, 130, 250);
+        Mat samples = dst.reshape(1, 1);
+        samples.convertTo(samples, opencv_core.CV_32FC1);
 
-        /*opencv_imgproc.cvtColor(inMat, inMat, Imgproc.COLOR_BGR2GRAY);
-        Mat features = new Mat();
-        opencv_imgproc.Canny(inMat, features, 130, 250);
-
-        Mat p = features.reshape(1, 1);
-        p.convertTo(p, opencv_core.CV_32FC1);
-
-        float ret = svm.predict(p);
+        // 如果训练时使用这个标识，那么符合的图像会返回9.0
+        float ret = svm.predict(samples);
         return (int) ret;*/
+        
     }
 
     /**
