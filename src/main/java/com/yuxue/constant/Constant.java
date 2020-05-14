@@ -11,10 +11,10 @@ public class Constant {
 	public static final String UTF8 = "UTF-8";
 
 	// 车牌识别， 默认车牌图片保存路径
-	public static String DEFAULT_DIR = "D:/PlateDetect/";
+	public static String DEFAULT_DIR = "./PlateDetect/";
 	
 	// 车牌识别， 默认车牌图片处理过程temp路径
-	public static String DEFAULT_TEMP_DIR = "D:/PlateDetect/temp/";
+	public static String DEFAULT_TEMP_DIR = "./PlateDetect/temp/";
 	
 	// 车牌识别，默认处理图片类型
 	public static String DEFAULT_TYPE = "png,jpg,jpeg";
