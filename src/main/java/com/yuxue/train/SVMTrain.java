@@ -100,6 +100,7 @@ public class SVMTrain {
             // System.out.println(files.get(i));
             Mat inMat = opencv_imgcodecs.imread(files.get(i));
             // 调用回调函数决定特征
+            // Mat features = this.callback.getHisteqFeatures(inMat);
             Mat features = this.callback.getHistogramFeatures(inMat);
             // 通过直方图均衡化后的彩色图进行预测
             Mat p = features.reshape(1, 1);
@@ -307,6 +308,7 @@ public class SVMTrain {
         for (int i = 0; i < size; i++) {
             Mat inMat = testingImages.get(i);
             
+            // Mat features = callback.getHisteqFeatures(inMat);
             Mat features = callback.getHistogramFeatures(inMat);
             Mat p = features.reshape(1, 1);
             p.convertTo(p, opencv_core.CV_32F);
