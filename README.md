@@ -105,7 +105,8 @@ debug_char_auxRoi：
 
 #### 安装教程
 
-- 将项目拉取到本地，PlateDetect文件夹拷贝到d盘下，默认车牌识别操作均在d:/PlateDetect/目录下处理，可以根据需要自行修改
+- 将项目拉取到本地，PlateDetect文件夹拷贝到d盘下，默认车牌识别操作均在d:/PlateDetect/目录下处理
+- 需要修改操作路径，修改com/yuxue/constant/Constant.java文件常量参数即可，可以使用绝对盘符路径，也可以使用项目相对路径
 - lib下依赖包添加到build path；或者修改pom文件的注释内容，将opencv-platform依赖取消注释
 - spring boot方式运行项目，浏览器上输入 http://localhost:16666/index 即可打开操作界面
 - 浏览器上输入 http://localhost:16666/swagger-ui.html 即可打开接口文档页面

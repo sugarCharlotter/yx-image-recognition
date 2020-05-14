@@ -43,25 +43,27 @@ public class PlateJudge {
      * @return
      */
     public int plateJudge(final Mat inMat) {
+        int ret = 0;
+        // 使用com.yuxue.train.SVMTrain 生成的训练库文件
         Mat features = this.features.getHistogramFeatures(inMat);
-        // 通过直方图均衡化后的彩色图进行预测
-        Mat p = features.reshape(1, 1);
-        p.convertTo(p, opencv_core.CV_32FC1);
-        float ret = svm.predict(features);
-        return (int) ret;
+        Mat samples = features.reshape(1, 1);
+        samples.convertTo(samples, opencv_core.CV_32F);
         
-        /*// 使用com.yuxue.test.PlateDetectTrainTest 生成的训练库文件
+        // 使用com.yuxue.train.PlateRecoTrain 生成的训练库文件
         // 在使用的过程中，传入的样本切图要跟训练的时候处理切图的方法一致
-        Mat grayImage = new Mat();
+        /*Mat grayImage = new Mat();
         opencv_imgproc.cvtColor(inMat, grayImage, opencv_imgproc.CV_RGB2GRAY);
         Mat dst = new Mat();
         opencv_imgproc.Canny(grayImage, dst, 130, 250);
         Mat samples = dst.reshape(1, 1);
-        samples.convertTo(samples, opencv_core.CV_32FC1);
-
-        // 如果训练时使用这个标识，那么符合的图像会返回9.0
-        float ret = svm.predict(samples);
-        return (int) ret;*/
+        samples.convertTo(samples, opencv_core.CV_32F);*/
+        
+        // 正样本为0 负样本为1
+        if(svm.predict(samples) <= 0) {
+            ret = 1;
+        }
+        
+        return ret;
         
     }
 
