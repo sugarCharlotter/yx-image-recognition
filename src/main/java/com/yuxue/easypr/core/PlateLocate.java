@@ -5,6 +5,7 @@ import java.util.Vector;
 import static org.bytedeco.javacpp.opencv_core.*;
 import static org.bytedeco.javacpp.opencv_imgproc.*;
 
+import com.yuxue.constant.Constant;
 import org.bytedeco.javacpp.opencv_imgcodecs;
 
 import org.bytedeco.javacpp.opencv_core.CvPoint2D32f;
@@ -69,7 +70,7 @@ public class PlateLocate {
     protected boolean debug = true;
     
     // 开启调试模式之后，切图文件保存路径
-    protected String tempPath = "d:/PlateDetect/temp/" + System.currentTimeMillis() + "/";
+    protected String tempPath = Constant.DEFAULT_TEMP_DIR + System.currentTimeMillis() + "/";
 
     
 
