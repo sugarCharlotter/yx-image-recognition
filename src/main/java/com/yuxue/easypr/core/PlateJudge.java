@@ -33,8 +33,8 @@ public class PlateJudge {
 
     public PlateJudge() {
         svm.clear();
-        // svm=SVM.loadSVM(path, "svm");
-        svm=SVM.load(path);
+        svm=SVM.loadSVM(path, "svm");
+        //svm=SVM.load(path);
     }
 
     /**
@@ -43,11 +43,18 @@ public class PlateJudge {
      * @return
      */
     public int plateJudge(final Mat inMat) {
-        int ret = 0;
+        int ret = 1;
         // 使用com.yuxue.train.SVMTrain 生成的训练库文件
         Mat features = this.features.getHistogramFeatures(inMat);
-        Mat samples = features.reshape(1, 1);
-        samples.convertTo(samples, opencv_core.CV_32F);
+        /*Mat samples = features.reshape(1, 1);
+        samples.convertTo(samples, opencv_core.CV_32F);*/
+        
+        Mat p = features.reshape(1, 1);
+        p.convertTo(p, opencv_core.CV_32FC1);
+        ret = (int) svm.predict(features);
+        System.err.println(ret);
+        return ret;
+        
         
         // 使用com.yuxue.train.PlateRecoTrain 生成的训练库文件
         // 在使用的过程中，传入的样本切图要跟训练的时候处理切图的方法一致
@@ -59,11 +66,12 @@ public class PlateJudge {
         samples.convertTo(samples, opencv_core.CV_32F);*/
         
         // 正样本为0 负样本为1
-        if(svm.predict(samples) <= 0) {
+        /*if(svm.predict(samples) <= 0) {
             ret = 1;
-        }
-        
-        return ret;
+        }*/
+        /*ret = (int)svm.predict(samples);
+        System.err.println(ret);
+        return ret ;*/
         
     }
 
