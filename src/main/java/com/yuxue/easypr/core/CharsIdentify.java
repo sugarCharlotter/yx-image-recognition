@@ -8,6 +8,7 @@ import java.util.Map;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_ml.ANN_MLP;
 
+import com.yuxue.constant.Constant;
 import com.yuxue.util.Convert;
 
 
@@ -18,24 +19,9 @@ import com.yuxue.util.Convert;
  */
 public class CharsIdentify {
 
-    private int predictSize = 10;
+    private final static int numCharacter = 34; // 没有I和0, 10个数字与24个英文字符之和
 
-    // 车牌不使用I及O字母，防止0,1混淆
-    private final char strCharacters[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-            'F', 'G', 'H', /* 没有I */'J', 'K', 'L', 'M', 'N', /* 没有O */'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-    'Z' };
-
-    private final String strChinese[] = { "zh_cuan" /* 川 */, "zh_e" /* 鄂 */, "zh_gan" /* 赣 */, "zh_gan1"/* 甘 */,
-            "zh_gui"/* 贵 */, "zh_gui1"/* 桂 */, "zh_hei" /* 黑 */, "zh_hu" /* 沪 */, "zh_ji" /* 冀 */, "zh_jin" /* 津 */,
-            "zh_jing" /* 京 */, "zh_jl" /* 吉 */, "zh_liao" /* 辽 */, "zh_lu" /* 鲁 */, "zh_meng" /* 蒙 */,
-            "zh_min" /* 闽 */, "zh_ning" /* 宁 */, "zh_qing" /* 青 */, "zh_qiong" /* 琼 */, "zh_shan" /* 陕 */,
-            "zh_su" /* 苏 */, "zh_sx" /* 晋 */, "zh_wan" /* 皖 */, "zh_xiang" /* 湘 */, "zh_xin" /* 新 */, "zh_yu" /* 豫 */,
-            "zh_yu1" /* 渝 */, "zh_yue" /* 粤 */, "zh_yun" /* 云 */, "zh_zang" /* 藏 */, "zh_zhe" /* 浙 */};
-
-
-    private final static int numCharacter = 34; // 没有I和0,10个数字与24个英文字符之和
-
-    private final static int numAll = 65; /* 34+31=65 */
+    private final static int numAll = 65; /* 34+31=65 34个字符跟31个汉字 */
 
     private ANN_MLP ann=ANN_MLP.create();
 
@@ -89,7 +75,8 @@ public class CharsIdentify {
 
     public void loadModel(String s) {
         this.ann.clear();
-        ann=ANN_MLP.loadANN_MLP(s, "ann"); // 加载ann配置文件  图像转文字的训练库文件
+        //ann=ANN_MLP.loadANN_MLP(s, "ann"); // 加载ann配置文件  图像转文字的训练库文件
+        ann = ANN_MLP.load(s);
     }
 
 
@@ -101,14 +88,14 @@ public class CharsIdentify {
     public String charsIdentify(final Mat input, final Boolean isChinese, final Boolean isSpeci) {
         String result = "";
 
-        Mat f = CoreFunc.features(input, this.predictSize);
+        Mat f = CoreFunc.features(input, Constant.predictSize);
 
         int index = this.classify(f, isChinese, isSpeci);
 
         if (!isChinese) {
-            result = String.valueOf(strCharacters[index]);
+            result = String.valueOf(Constant.strCharacters[index]);
         } else {
-            String s = strChinese[index - numCharacter];
+            String s = Constant.strChinese[index - numCharacter];
             result = map.get(s);
         }
         return result;
@@ -127,7 +114,6 @@ public class CharsIdentify {
 
         for (int j = ann_min; j < ann_max; j++) {
             float val = Convert.toFloat(output.ptr(0, j));
-
             if (val > maxVal) {
                 maxVal = val;
                 result = j;
