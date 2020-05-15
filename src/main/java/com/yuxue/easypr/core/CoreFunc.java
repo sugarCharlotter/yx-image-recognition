@@ -265,6 +265,7 @@ public class CoreFunc {
 
         Mat lowData = new Mat();
         if (sizeData > 0) {
+            // resize.cpp:3784: error: (-215:Assertion failed) !ssize.empty() in function 'cv::resize'
             resize(in, lowData, new Size(sizeData, sizeData));
         }
 
@@ -281,7 +282,7 @@ public class CoreFunc {
         }
         for (int x = 0; x < lowData.cols(); x++) {
             for (int y = 0; y < lowData.rows(); y++, ++j) {
-                float val = lowData.ptr(x, y).get() & 0xFF;
+                float val = lowData.ptr(x, y).get(0) & 0xFF;
                 idx.put(0, j, val);
             }
         }

@@ -14,7 +14,15 @@ import com.yuxue.util.Convert;
 import com.yuxue.util.FileUtil;
 
 /**
+ * 基于org.bytedeco.javacpp包实现的训练
  * 
+ * 图片识别车牌训练
+ * 训练出来的库文件，用于判断切图是否包含车牌
+ * 
+ * 训练的svm.xml应用：
+ * 1、替换res/model/svm.xml文件
+ * 2、修改com.yuxue.easypr.core.PlateJudge.plateJudge(Mat) 方法
+ *      将样本处理方法切换一下，即将对应被注释掉的模块代码取消注释
  * @author yuxue
  * @date 2020-05-14 22:16
  */
@@ -105,10 +113,10 @@ public class SVMTrain {
             // 通过直方图均衡化后的彩色图进行预测
             Mat p = features.reshape(1, 1);
             p.convertTo(p, opencv_core.CV_32F);
-            
+
             // 136  36  14688   1   变换尺寸
             // System.err.println(inMat.cols() + "\t" + inMat.rows() + "\t" + p.cols() + "\t" + p.rows());
-            
+
             trainingImages.push_back(p); // 合并成一张图片
             trainingLabels.add(label);
         }
@@ -210,7 +218,7 @@ public class SVMTrain {
      * @return
      */
     public int svmTrain(boolean dividePrepared) {
-        
+
         Mat classes = new Mat();
         Mat trainingData = new Mat();
         Mat trainingImages = new Mat();
@@ -226,7 +234,7 @@ public class SVMTrain {
 
         getPlateTrain(trainingImages, trainingLabels, hasPlate, 0);
         getPlateTrain(trainingImages, trainingLabels, noPlate, 1);
-        
+
         // System.err.println(trainingImages.cols());
 
         trainingImages.copyTo(trainingData);
@@ -304,21 +312,21 @@ public class SVMTrain {
 
         long size =  testingImages.size();
         System.err.println(size);
-        
+
         for (int i = 0; i < size; i++) {
             Mat inMat = testingImages.get(i);
-            
+
             // Mat features = callback.getHisteqFeatures(inMat);
             Mat features = callback.getHistogramFeatures(inMat);
             Mat p = features.reshape(1, 1);
             p.convertTo(p, opencv_core.CV_32F);
-            
+
             // System.out.println(p.cols() + "\t" + p.rows() + "\t" + p.type());
-            
+
             // samples.cols == var_count && samples.type() == CV_32F
             // var_count 的值会在svm.xml库文件中有体现
             float predoct = svm.predict(features);
-            
+
             int predict = (int) predoct; // 预期值
             int real = testingLabels_real.get(i); // 实际值
 
