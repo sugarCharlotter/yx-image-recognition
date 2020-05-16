@@ -10,9 +10,7 @@
 - 单张图片、多张图片并发、单图片多车牌检测及识别
 - 图片车牌检测训练
 - 车牌图片文字识别训练
-- 包含两种依赖包的实现方式：
- 基于org.bytedeco.javacpp包的实现方式
- 基于org.opencv官方包的实现方式
+- 包含两种依赖包的实现方式： 基于org.bytedeco.javacpp包的实现方式； 基于org.opencv官方包的实现方式
 
 #### 软件版本
 - jdk 1.8.61+
@@ -114,7 +112,7 @@ debug_char_auxRoi：
 - lib下依赖包添加到build path；或者修改pom文件的注释内容，将opencv-platform依赖取消注释
 - spring boot方式运行项目，浏览器上输入 http://localhost:16666/index 即可打开操作界面
 - 浏览器上输入 http://localhost:16666/swagger-ui.html 即可打开接口文档页面
-- 
+
 
 #### 使用说明
 
