@@ -126,8 +126,9 @@ debug_char_auxRoi：
 - 作者csdn微博地址：https://blog.csdn.net/weixin_42686388
 
 #### 参考文档
-liuruoze/EasyPR：https://gitee.com/easypr/EasyPR?_from=gitee_search
-fan-wenjie/EasyPR-Java： https://github.com/fan-wenjie/EasyPR-Java
-opencv官方： https://opencv.org/
+
+- liuruoze/EasyPR：https://gitee.com/easypr/EasyPR?_from=gitee_search
+- fan-wenjie/EasyPR-Java： https://github.com/fan-wenjie/EasyPR-Java
+- opencv官方： https://opencv.org/
 
 
