@@ -33,7 +33,7 @@ public class AroundMethod implements MethodInterceptor{
 
 		RetExclude re = methodInvocation.getMethod().getAnnotation(RetExclude.class);
 		if(null != re && null != re.value()) {
-			// log.info("api添加了封装排除注解");
+			log.info("api添加了封装排除注解");
 			return ret;
 		}
 		// log.info("封装返回值");

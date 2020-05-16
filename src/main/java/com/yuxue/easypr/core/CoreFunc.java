@@ -23,8 +23,9 @@ import com.yuxue.enumtype.PlateColor;
 
 
 /**
- * @author lin.yao
  * 
+ * @author yuxue
+ * @date 2020-05-16 21:09
  */
 public class CoreFunc {
 

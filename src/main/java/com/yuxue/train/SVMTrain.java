@@ -15,6 +15,7 @@ import com.yuxue.util.FileUtil;
 
 /**
  * 基于org.bytedeco.javacpp包实现的训练
+ * JavaCPP 是一个开源库，它提供了在 Java 中高效访问本地 C++的方法
  * 
  * 图片识别车牌训练
  * 训练出来的库文件，用于判断切图是否包含车牌

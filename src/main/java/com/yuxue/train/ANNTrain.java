@@ -1,6 +1,5 @@
 package com.yuxue.train;
 
-
 import java.util.Vector;
 
 import org.opencv.core.Core;
@@ -23,7 +22,7 @@ import com.yuxue.util.FileUtil;
  * 基于org.opencv包实现的训练
  * 
  * 图片文字识别训练
- * 训练出来的库文件，用于判断切图是否包含车牌
+ * 训练出来的库文件，用于识别图片中的文字
  * 
  * 训练的ann.xml应用：
  * 1、替换res/model/ann.xml文件
@@ -40,14 +39,13 @@ public class ANNTrain {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
 
-    private final int numCharacter = Constant.strCharacters.length;
-
     // 默认的训练操作的根目录
     private static final String DEFAULT_PATH = "D:/PlateDetect/train/chars_recognise_ann/";
 
     // 训练模型文件保存位置
     private static final String MODEL_PATH = DEFAULT_PATH + "ann.xml";
 
+    
     public static float[] projectedHistogram(final Mat img, Direction direction) {
         int sz = 0;
         switch (direction) {
@@ -120,7 +118,7 @@ public class ANNTrain {
         Mat samples = new Mat(); // 使用push_back，行数列数不能赋初始值
         Vector<Integer> trainingLabels = new Vector<Integer>();
         // 加载数字及字母字符
-        for (int i = 0; i < numCharacter; i++) {
+        for (int i = 0; i < Constant.numCharacter; i++) {
             String str = DEFAULT_PATH + "learn/" + Constant.strCharacters[i];
             Vector<String> files = new Vector<String>();
             FileUtil.getFiles(str, files);
@@ -147,22 +145,19 @@ public class ANNTrain {
                 // System.err.println(files.get(j));   // 文件名不能包含中文
                 Mat f = features(img, _predictsize);
                 samples.push_back(f);
-                trainingLabels.add(i + numCharacter);
+                trainingLabels.add(i + Constant.numCharacter);
             }
         }
 
 
         //440   vhist.length + hhist.length + lowData.cols() * lowData.rows();
         // CV_32FC1 CV_32SC1 CV_32F
-        Mat classes = new Mat(trainingLabels.size(), 65, CvType.CV_32F);
+        Mat classes = new Mat(trainingLabels.size(), Constant.numAll, CvType.CV_32F);
         
         float[] labels = new float[trainingLabels.size()];
         for (int i = 0; i < labels.length; ++i) {
-            // labels[i] = trainingLabels.get(i).intValue();
             classes.put(i, trainingLabels.get(i), 1.f);
         }
-        
-        // classes.put(0, 0, labels);
 
         // samples.type() == CV_32F || samples.type() == CV_32S 
         TrainData train_data = TrainData.create(samples, Ml.ROW_SAMPLE, classes);
@@ -194,11 +189,12 @@ public class ANNTrain {
         Vector<String> files = new Vector<String>();
         FileUtil.getFiles(DEFAULT_PATH + "test/", files);
         
-        int i = 0;
         for (String string : files) {
             Mat img = Imgcodecs.imread(string, 0);
             Mat f = features(img, Constant.predictSize);
             
+            // 140 predictSize = 10; vhist.length + hhist.length + lowData.cols() * lowData.rows();
+            // 440 predictSize = 20;
             Mat output = new Mat(1, 140, CvType.CV_32F);
             //ann.predict(f, output, 0);  // 预测结果
             System.err.println(string + "===>" + (int) ann.predict(f, output, 0));
@@ -207,7 +203,6 @@ public class ANNTrain {
             // System.err.println(string + "===>" + output.get(0, 0)[0]);
             
         }
-        
     }
 
     public static void main(String[] args) {
@@ -216,7 +211,7 @@ public class ANNTrain {
         // 这里演示只训练model文件夹下的ann.xml，此模型是一个predictSize=10,neurons=40的ANN模型
         // 可根据需要训练不同的predictSize或者neurons的ANN模型
         // 根据机器的不同，训练时间不一样，但一般需要10分钟左右，所以慢慢等一会吧。
-        annT.train(Constant.predictSize, Constant.neurons);
+        // annT.train(Constant.predictSize, Constant.neurons);
 
         annT.predict();
         

@@ -19,6 +19,7 @@ import com.yuxue.util.FileUtil;
 /**
  * 基于org.opencv官方包实现的训练
  * 
+ * 
  * windows下环境配置：
  * 1、官网下载对应版本的openvp：https://opencv.org/releases/page/2/  当前使用4.0.1版本
  * 2、双击exe文件安装，将 安装目录下\build\java\x64\opencv_java401.dll 拷贝到\build\x64\vc14\bin\目录下
