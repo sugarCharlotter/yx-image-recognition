@@ -19,14 +19,15 @@ public class CommandRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        /*try {
+        try {
         	String os = System.getProperty("os.name").toLowerCase();
         	if(os.contains("windows")) {
-        		Runtime.getRuntime().exec("cmd   /c   start   http://localhost:" + port + "/index");
+        	    // 默认浏览器打开
+        		// Runtime.getRuntime().exec("cmd   /c   start   http://localhost:" + port + "/index");
         	}
         } catch (Exception ex) {
             ex.printStackTrace();
             log.error("打开默认浏览器异常", ex);
-        }*/
+        }
     }
 }
