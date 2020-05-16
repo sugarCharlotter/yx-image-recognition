@@ -11,8 +11,8 @@
 - 图片车牌检测训练
 - 车牌图片文字识别训练
 - 包含两种依赖包的实现方式：
- - 基于org.bytedeco.javacpp包的实现方式
- - 基于org.opencv官方包的实现方式
+ 基于org.bytedeco.javacpp包的实现方式
+ 基于org.opencv官方包的实现方式
 
 #### 软件版本
 - jdk 1.8.61+
