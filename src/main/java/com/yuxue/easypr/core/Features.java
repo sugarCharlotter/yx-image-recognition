@@ -65,7 +65,7 @@ public class Features implements SVMCallback {
     /**
      * 本函数是获取SITF特征子的回调函数
      * 
-     * @param image
+     * @param image  
      * @return
      */
     @Override

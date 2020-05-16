@@ -52,7 +52,6 @@ public class PlateJudge {
         Mat p = features.reshape(1, 1);
         p.convertTo(p, opencv_core.CV_32FC1);
         ret = (int) svm.predict(features);
-        System.err.println(ret);
         return ret;
         
         

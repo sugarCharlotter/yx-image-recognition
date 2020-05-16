@@ -1,6 +1,7 @@
 package com.yuxue.easypr.core;
 
 import org.bytedeco.javacpp.opencv_core;
+import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_ml.ANN_MLP;
 
@@ -36,23 +37,29 @@ public class CharsIdentify {
      */
     public String charsIdentify(final Mat input, final Boolean isChinese, final Boolean isSpeci) {
         String result = "";
-
-        Mat f = CoreFunc.features(input, Constant.predictSize);
+        
+        String name = "D:/PlateDetect/train/chars_recognise_ann/" + System.currentTimeMillis() + ".jpg";
+        opencv_imgcodecs.imwrite(name, input);
+        Mat img = opencv_imgcodecs.imread(name);
+        Mat f = CoreFunc.features(img, Constant.predictSize);
 
         int index = this.classify(f, isChinese, isSpeci);
-
-        if (!isChinese) {
+        
+        System.err.print(index);
+        if (index < Constant.numCharacter) {
             result = String.valueOf(Constant.strCharacters[index]);
         } else {
             String s = Constant.strChinese[index - Constant.numCharacter];
             result = Constant.KEY_CHINESE_MAP.get(s);   // 编码转中文
         }
+        System.err.println(result);
         return result;
     }
-
+    
     private int classify(final Mat f, final Boolean isChinses, final Boolean isSpeci) {
         int result = -1;
-        Mat output = new Mat(1, Constant.numAll, opencv_core.CV_32FC1);
+        
+        Mat output = new Mat(1, 140, opencv_core.CV_32F);
 
         ann.predict(f, output, 0);  // 预测结果
 
@@ -70,5 +77,6 @@ public class CharsIdentify {
         }
         return result;
     }
+
 
 }
