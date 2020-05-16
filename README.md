@@ -121,7 +121,7 @@ debug_char_auxRoi：
 #### 使用说明
 
 - **车牌图片来源于网络，仅用于交流学习，不得用于商业用途；如有侵权，请联系本人删除**
-- 转发请注明出处： 本项目作者：yuxue
+- 转发请注明出处； 本项目作者：yuxue，一个不资深的java语言从业者
 - 作者gitee地址: https://gitee.com/admin_yu
 - 作者csdn微博地址：https://blog.csdn.net/weixin_42686388
 
