@@ -1,6 +1,5 @@
 package com.yuxue.train;
 
-import static org.bytedeco.javacpp.opencv_core.CV_32FC1;
 
 import java.util.Vector;
 
@@ -17,12 +16,11 @@ import org.opencv.ml.TrainData;
 
 import com.yuxue.constant.Constant;
 import com.yuxue.enumtype.Direction;
-import com.yuxue.util.Convert;
 import com.yuxue.util.FileUtil;
 
 
 /**
- * 基于org.bytedeco.javacpp包实现的训练
+ * 基于org.opencv包实现的训练
  * 
  * 图片文字识别训练
  * 训练出来的库文件，用于判断切图是否包含车牌
