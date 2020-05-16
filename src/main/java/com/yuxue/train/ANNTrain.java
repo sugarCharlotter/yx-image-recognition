@@ -27,10 +27,9 @@ import com.yuxue.util.FileUtil;
  * 图片文字识别训练
  * 训练出来的库文件，用于判断切图是否包含车牌
  * 
- * 训练的svm.xml应用：
- * 1、替换res/model/svm.xml文件
- * 2、修改com.yuxue.easypr.core.PlateJudge.plateJudge(Mat) 方法
- *      将样本处理方法切换一下，即将对应被注释掉的模块代码取消注释
+ * 训练的ann.xml应用：
+ * 1、替换res/model/ann.xml文件
+ * 2、修改com.yuxue.easypr.core.CharsIdentify.charsIdentify(Mat, Boolean, Boolean)方法
  * 
  * @author yuxue
  * @date 2020-05-14 22:16
