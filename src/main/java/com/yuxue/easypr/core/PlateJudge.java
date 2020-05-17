@@ -10,6 +10,8 @@ import org.bytedeco.javacpp.opencv_core.Rect;
 import org.bytedeco.javacpp.opencv_core.Size;
 import org.bytedeco.javacpp.opencv_ml.SVM;
 
+import com.yuxue.constant.Constant;
+
 
 /**
  * 车牌判断
@@ -20,22 +22,21 @@ public class PlateJudge {
 
     private SVM svm = SVM.create();
 
+    public PlateJudge() {
+        loadSVM(Constant.DEFAULT_SVM_PATH);
+    }
+    
+    public void loadSVM(String path) {
+        svm.clear();
+        // svm=SVM.loadSVM(path, "svm");
+        svm=SVM.load(path);
+    }
+    
     /**
      * EasyPR的getFeatures回调函数, 用于从车牌的image生成svm的训练特征features
      */
     private SVMCallback features = new Features();
-
-    /**
-     * 模型存储路径
-     */
-    private String path = "res/model/svm.xml";
-
-
-    public PlateJudge() {
-        svm.clear();
-        svm=SVM.loadSVM(path, "svm");
-        //svm=SVM.load(path);
-    }
+    
 
     /**
      * 对单幅图像进行SVM判断
@@ -53,7 +54,6 @@ public class PlateJudge {
         p.convertTo(p, opencv_core.CV_32FC1);
         ret = (int) svm.predict(features);
         return ret;
-        
         
         // 使用com.yuxue.train.PlateRecoTrain 生成的训练库文件
         // 在使用的过程中，传入的样本切图要跟训练的时候处理切图的方法一致
@@ -103,13 +103,5 @@ public class PlateJudge {
         return 0;
     }
 
-
-    public void setModelPath(String path) {
-        this.path = path;
-    }
-
-    public final String getModelPath() {
-        return path;
-    }
 
 }

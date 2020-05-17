@@ -1,7 +1,6 @@
 package com.yuxue.easypr.core;
 
 import org.bytedeco.javacpp.opencv_core;
-import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_ml.ANN_MLP;
 
@@ -22,11 +21,11 @@ public class CharsIdentify {
         loadModel(Constant.DEFAULT_ANN_PATH);
     }
 
-    public void loadModel(String s) {
+    public void loadModel(String path) {
         this.ann.clear();
         // 加载ann配置文件  图像转文字的训练库文件
-        //ann=ANN_MLP.loadANN_MLP(s, "ann"); 
-        ann = ANN_MLP.load(s);
+        //ann=ANN_MLP.loadANN_MLP(path, "ann"); 
+        ann = ANN_MLP.load(path);
     }
     
 

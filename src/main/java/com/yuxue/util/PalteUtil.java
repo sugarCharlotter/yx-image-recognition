@@ -13,9 +13,7 @@ public class PalteUtil {
      * @return
      */
     public static Boolean isPlate(String str) {
-
         Pattern p = Pattern.compile(Constant.plateReg);
-
         Boolean bl = false;
 
         //提取车牌

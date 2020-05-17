@@ -40,10 +40,10 @@ public class SVMTrain1 {
     private static final String hasPlate = "HasPlate";
     private static final String noPlate = "NoPlate";
 
-    public SVMTrain() {
+    public SVMTrain1() {
     }
 
-    public SVMTrain(SVMCallback callback) {
+    public SVMTrain1(SVMCallback callback) {
         this.callback = callback;
     }
 
@@ -374,7 +374,7 @@ public class SVMTrain1 {
     }
 
     public static void main(String[] args) {
-        SVMTrain s = new SVMTrain();
+        SVMTrain1 s = new SVMTrain1();
         s.svmTrain(true);
         s.svmPredict();
     }

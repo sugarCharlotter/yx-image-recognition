@@ -72,8 +72,6 @@ public class PlateLocate {
     // 开启调试模式之后，切图文件保存路径
     protected String tempPath = Constant.DEFAULT_TEMP_DIR + System.currentTimeMillis() + "/";
 
-    
-
     /**
      * 生活模式与工业模式切换
      * @param islifemode
@@ -176,15 +174,14 @@ public class PlateLocate {
 
         Mat result = new Mat();
         if (debug) {
-            // Draw red contours on the source image
             src.copyTo(result);
+            // 将轮廓描绘到图上输出
             drawContours(result, contours, -1, new Scalar(0, 0, 255, 255));
             opencv_imgcodecs.imwrite(tempPath + "debug_Contours.jpg", result);
         }
 
         // Start to iterate to each contour founded
         // 筛选。对轮廓求最小外接矩形，然后验证，不满足条件的淘汰。
-
         Vector<RotatedRect> rects = new Vector<RotatedRect>();
 
         for (int i = 0; i < contours.size(); ++i) {

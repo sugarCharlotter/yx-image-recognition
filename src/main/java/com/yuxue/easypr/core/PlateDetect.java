@@ -6,7 +6,7 @@ import org.bytedeco.javacpp.opencv_core.Mat;
 
 
 /**
- * 车牌检测
+ * 车牌检测识别
  * 分两个步骤： 1、车牌定位 2、车牌判断
  * @author yuxue
  * @date 2020-04-24 15:33

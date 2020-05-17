@@ -9,7 +9,7 @@ import org.bytedeco.javacpp.opencv_core.MatVector;
 import org.bytedeco.javacpp.opencv_imgproc;
 
 /**
- * 特征
+ * 
  * @author yuxue
  * @date 2020-05-05 08:26
  */

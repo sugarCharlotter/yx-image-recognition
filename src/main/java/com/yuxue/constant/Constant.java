@@ -25,14 +25,15 @@ public class Constant {
 
     public static String DEFAULT_ANN_PATH = "res/model/ann.xml";
     //public static String DEFAULT_ANN_PATH = "D:/PlateDetect/train/chars_recognise_ann/ann.xml";
-
-  
+    
+    public static String DEFAULT_SVM_PATH = "res/model/svm.xml";
 
     // 车牌识别，判断是否车牌的正则表达式
     public static String plateReg = "([京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领A-Z]{1}[A-Z]{1}(([0-9]{5}[DF])|([DF]([A-HJ-NP-Z0-9])[0-9]{4})))|([京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领A-Z]{1}[A-Z]{1}[A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9挂学警港澳]{1})";
 
     public static int predictSize = 10;
 
+    
     public static int neurons = 40;
 
     // 中国车牌; 34个字符; 没有 字母I、字母O

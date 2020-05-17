@@ -37,7 +37,6 @@ import com.yuxue.util.FileUtil;
 public class PlateServiceImpl implements PlateService {
 
     
-    
     // 车牌定位处理步骤，该map用于表示步骤图片的顺序
     private static Map<String, Integer> debugMap = Maps.newLinkedHashMap();
     static {

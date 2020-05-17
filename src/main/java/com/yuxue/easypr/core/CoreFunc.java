@@ -1,21 +1,12 @@
 package com.yuxue.easypr.core;
 
-import static org.bytedeco.javacpp.opencv_core.CV_32F;
-import static org.bytedeco.javacpp.opencv_core.countNonZero;
-import static org.bytedeco.javacpp.opencv_core.extractChannel;
-import static org.bytedeco.javacpp.opencv_core.merge;
-import static org.bytedeco.javacpp.opencv_core.split;
-import static org.bytedeco.javacpp.opencv_highgui.cvWaitKey;
-import static org.bytedeco.javacpp.opencv_imgproc.CV_BGR2HSV;
-import static org.bytedeco.javacpp.opencv_imgproc.cvtColor;
-import static org.bytedeco.javacpp.opencv_imgproc.equalizeHist;
-import static org.bytedeco.javacpp.opencv_imgproc.resize;
-
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.MatVector;
 import org.bytedeco.javacpp.opencv_core.Size;
 import org.bytedeco.javacpp.opencv_highgui;
+import org.bytedeco.javacpp.opencv_imgproc;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 
 import com.yuxue.enumtype.Direction;
@@ -49,8 +40,7 @@ public class CoreFunc {
         final float minref_sv = 64;
         final float minabs_sv = 95;
 
-        
-        //opencv颜色识别的HSV中各个颜色所对应的H的范围： Orange 0-22 Yellow 22- 38 Green 38-75 Blue 75-130
+        // opencv颜色识别的HSV中各个颜色所对应的H的范围： Orange 0-22 Yellow 22- 38 Green 38-75 Blue 75-130
         // blue的H范围
         final int min_blue = 100;
         final int max_blue = 140;
@@ -58,18 +48,18 @@ public class CoreFunc {
         // yellow的H范围
         final int min_yellow = 15;
         final int max_yellow = 40;
-        
+
         // green的H范围
         final int min_green = 8;
         final int max_green = 150;
-        
+
         // 转到HSV空间进行处理，颜色搜索主要使用的是H分量进行蓝色与黄色的匹配工作
         Mat src_hsv = new Mat();
-        cvtColor(src, src_hsv, CV_BGR2HSV);
+        opencv_imgproc.cvtColor(src, src_hsv, opencv_imgproc.CV_BGR2HSV);
         MatVector hsvSplit = new MatVector();
-        split(src_hsv, hsvSplit);
-        equalizeHist(hsvSplit.get(2), hsvSplit.get(2));
-        merge(hsvSplit, src_hsv);
+        opencv_core.split(src_hsv, hsvSplit);
+        opencv_imgproc.equalizeHist(hsvSplit.get(2), hsvSplit.get(2));
+        opencv_core.merge(hsvSplit, src_hsv);
 
         // 匹配模板基色,切换以查找想要的基色
         int min_h = 0;
@@ -147,7 +137,7 @@ public class CoreFunc {
 
         // 获取颜色匹配后的二值灰度图
         MatVector hsvSplit_done = new MatVector();
-        split(src_hsv, hsvSplit_done);
+        opencv_core.split(src_hsv, hsvSplit_done);
         Mat src_grey = hsvSplit_done.get(2);
 
         return src_grey;
@@ -174,7 +164,7 @@ public class CoreFunc {
 
         Mat gray = colorMatch(src, color, adaptive_minsv);
 
-        float percent = (float) countNonZero(gray) / (gray.rows() * gray.cols());
+        float percent = (float) opencv_core.countNonZero(gray) / (gray.rows() * gray.cols());
 
         return (percent > thresh) ? true : false;
     }
@@ -227,10 +217,10 @@ public class CoreFunc {
 
         // 统计这一行或一列中，非零元素的个数，并保存到nonZeroMat中
         float[] nonZeroMat = new float[sz];
-        extractChannel(img, img, 0);
+        opencv_core.extractChannel(img, img, 0);
         for (int j = 0; j < sz; j++) {
             Mat data = (direction == Direction.HORIZONTAL) ? img.row(j) : img.col(j);
-            int count = countNonZero(data);
+            int count = opencv_core.countNonZero(data);
             nonZeroMat[j] = count;
         }
 
@@ -267,11 +257,11 @@ public class CoreFunc {
         Mat lowData = new Mat();
         if (sizeData > 0) {
             // resize.cpp:3784: error: (-215:Assertion failed) !ssize.empty() in function 'cv::resize'
-            resize(in, lowData, new Size(sizeData, sizeData));
+            opencv_imgproc.resize(in, lowData, new Size(sizeData, sizeData));
         }
 
         int numCols = vhist.length + hhist.length + lowData.cols() * lowData.rows();
-        Mat out = Mat.zeros(1, numCols, CV_32F).asMat();
+        Mat out = Mat.zeros(1, numCols, opencv_core.CV_32F).asMat();
         FloatIndexer idx = out.createIndexer();
 
         int j = 0;
@@ -291,16 +281,17 @@ public class CoreFunc {
         return out;
     }
 
+    
+    
     /**
      * 显示图像
-     * 
      * @param title
      * @param src
      */
     public static void showImage(final String title, final Mat src) {
-        if(src!=null){
+        if (src != null) {
             opencv_highgui.imshow(title, src);
-            cvWaitKey(0);
+            opencv_highgui.cvWaitKey(0);
         }
     }
 
