@@ -38,10 +38,12 @@ public class CharsIdentify {
     public String charsIdentify(final Mat input, final Boolean isChinese, final Boolean isSpeci) {
         String result = "";
         
-        String name = "D:/PlateDetect/train/chars_recognise_ann/" + System.currentTimeMillis() + ".jpg";
+        /*String name = "D:/PlateDetect/train/chars_recognise_ann/" + System.currentTimeMillis() + ".jpg";
         opencv_imgcodecs.imwrite(name, input);
         Mat img = opencv_imgcodecs.imread(name);
-        Mat f = CoreFunc.features(img, Constant.predictSize);
+        Mat f = CoreFunc.features(img, Constant.predictSize);*/
+        
+        Mat f = CoreFunc.features(input, Constant.predictSize);
 
         int index = this.classify(f, isChinese, isSpeci);
         
