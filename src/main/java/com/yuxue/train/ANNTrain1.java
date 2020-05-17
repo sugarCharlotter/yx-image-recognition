@@ -5,13 +5,11 @@ import java.util.Vector;
 import static org.bytedeco.javacpp.opencv_core.*;
 import static org.bytedeco.javacpp.opencv_ml.*;
 
-import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.bytedeco.javacpp.opencv_core.Mat;
 
 import com.yuxue.constant.Constant;
 import com.yuxue.easypr.core.CoreFunc;
-import com.yuxue.util.Convert;
 import com.yuxue.util.FileUtil;
 
 /**
@@ -150,7 +148,7 @@ public class ANNTrain1 {
         // 这里演示只训练model文件夹下的ann.xml，此模型是一个predictSize=10,neurons=40的ANN模型
         // 可根据需要训练不同的predictSize或者neurons的ANN模型
         // 根据机器的不同，训练时间不一样，但一般需要10分钟左右，所以慢慢等一会吧。
-        // annT.train(Constant.predictSize, Constant.neurons);
+        annT.train(Constant.predictSize, Constant.neurons);
 
         annT.predict();
         
