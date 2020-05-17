@@ -23,8 +23,8 @@ public class Constant {
     // 车牌识别，默认处理图片类型
     public static String DEFAULT_TYPE = "png,jpg,jpeg";
 
-    // public static String DEFAULT_ANN_PATH = "res/model/ann.xml";
-    public static String DEFAULT_ANN_PATH = "D:/PlateDetect/train/chars_recognise_ann/ann.xml";
+    public static String DEFAULT_ANN_PATH = "res/model/ann.xml";
+    //public static String DEFAULT_ANN_PATH = "D:/PlateDetect/train/chars_recognise_ann/ann.xml";
 
   
 
