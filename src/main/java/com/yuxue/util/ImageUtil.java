@@ -27,15 +27,25 @@ public class ImageUtil {
 
     public static void main(String[] args) {
 
-        String tempPath = DEFAULT_BASE_TEST_PATH ;
+        String tempPath = DEFAULT_BASE_TEST_PATH + System.currentTimeMillis() + "/";
         FileUtil.createDir(tempPath); // 创建文件夹
 
         // String filename = DEFAULT_BASE_TEST_PATH + "test01.jpg";
         String filename = DEFAULT_BASE_TEST_PATH + "test.png";
         Mat inMat = opencv_imgcodecs.imread(filename);
+        
+        Boolean debug = true;
 
-        // ImageUtil.gaussianBlur(inMat, true, tempPath);
-        ImageUtil.rgb2Hsv(inMat, true, tempPath);
+        Mat gsMat = ImageUtil.gaussianBlur(inMat, debug, tempPath);
+        
+        Mat grey = ImageUtil.grey(gsMat, debug, tempPath);
+        
+        Mat sobel = ImageUtil.sobel(grey, debug, tempPath);
+        
+        
+        
+        
+        // ImageUtil.rgb2Hsv(inMat, debug, tempPath);
     }
 
 
@@ -111,6 +121,22 @@ public class ImageUtil {
     }
     
     
+    
+    /**
+     * 对图像进行二值化。将灰度图像（每个像素点有256 个取值可能）转化为二值图像（每个像素点仅有1 和0 两个取值可能）
+     * @param inMat
+     * @param debug
+     * @param tempPath
+     * @return
+     */
+    public static Mat threshold(Mat inMat, Boolean debug, String tempPath) {
+        Mat dst = new Mat();
+        opencv_imgproc.threshold(inMat, dst, 0, 255, opencv_imgproc.CV_THRESH_OTSU + opencv_imgproc.CV_THRESH_BINARY);
+        if (debug) {
+            opencv_imgcodecs.imwrite(tempPath + "debugThreshold.jpg", dst);
+        }
+        return dst;
+    }
     
     
     
