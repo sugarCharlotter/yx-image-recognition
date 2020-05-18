@@ -188,43 +188,6 @@ public class PlateRecoTest {
         String imgPath = "res/image/test_image/debug_resize_2.jpg";
         Mat src = opencv_imgcodecs.imread(imgPath);
 
-        // 获取绿牌的H值范围
-        /*MatVector hsvSplit = new MatVector();
-        split(src_hsv, hsvSplit);
-        equalizeHist(hsvSplit.get(2), hsvSplit.get(2));
-        merge(hsvSplit, src_hsv);
-
-        int channels = src_hsv.channels();
-        int nRows = src_hsv.rows();
-        // 图像数据列需要考虑通道数的影响；
-        int nCols = src_hsv.cols() * channels;
-
-        // 连续存储的数据，按一行处理
-        if (src_hsv.isContinuous()) {
-            nCols *= nRows;
-            nRows = 1;
-        }
-        Map<Integer, Integer> map = Maps.newHashMap();
-        for (int i = 0; i < nRows; ++i) {
-            BytePointer p = src_hsv.ptr(i);
-            for (int j = 0; j < nCols; j += 3) {
-                int H = p.get(j) & 0xFF;
-                int S = p.get(j + 1) & 0xFF;
-                int V = p.get(j + 2) & 0xFF;
-
-                if(map.containsKey(H)) {
-                    int count = map.get(H);
-                    map.put(H, count+1);
-                } else {
-                    map.put(H, 1);
-                }
-
-            }
-        }
-        map.entrySet().forEach(n->{
-            System.err.println(n.getKey() + "\t" + n.getValue());
-        });*/
-
         // 判断绿色车牌
         Mat src_hsv = new Mat();
         opencv_imgproc.cvtColor(src, src_hsv, opencv_imgproc.CV_BGR2HSV);
