@@ -1,5 +1,6 @@
 package com.yuxue.util;
 
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -24,8 +25,6 @@ public class ImageUtil {
 
     private static String DEFAULT_BASE_TEST_PATH = "D:/PlateDetect/temp/";
 
-    public static final int DEFAULT_GAUSSIANBLUR_SIZE = 5;
-
     public static void main(String[] args) {
 
         String tempPath = DEFAULT_BASE_TEST_PATH ;
@@ -35,10 +34,110 @@ public class ImageUtil {
         String filename = DEFAULT_BASE_TEST_PATH + "test.png";
         Mat inMat = opencv_imgcodecs.imread(filename);
 
-        ImageUtil.rgb2Hsv(inMat, true, tempPath);
         // ImageUtil.gaussianBlur(inMat, true, tempPath);
+        ImageUtil.rgb2Hsv(inMat, true, tempPath);
     }
 
+
+    
+    /**
+     * 高斯模糊
+     * @param inMat
+     * @param debug
+     * @return
+     */
+    public static final int DEFAULT_GAUSSIANBLUR_SIZE = 5;
+    public static Mat gaussianBlur(Mat inMat, Boolean debug, String tempPath) {
+        Mat dst = new Mat();
+        opencv_imgproc.GaussianBlur(inMat, dst, new Size(DEFAULT_GAUSSIANBLUR_SIZE, DEFAULT_GAUSSIANBLUR_SIZE), 0, 0, opencv_core.BORDER_DEFAULT);
+        if (debug) {
+            opencv_imgcodecs.imwrite(tempPath + "gaussianBlur.jpg", dst);
+        }
+        return dst;
+    }
+    
+    
+    /**
+     * 将图像进行灰度化
+     * @param inMat
+     * @param debug
+     * @param tempPath
+     * @return
+     */
+    public static Mat grey(Mat inMat, Boolean debug, String tempPath) {
+        Mat dst = new Mat();
+        opencv_imgproc.cvtColor(inMat, dst, opencv_imgproc.CV_RGB2GRAY);
+        if (debug) {
+            opencv_imgcodecs.imwrite(tempPath + "debugGray.jpg", dst);
+        }
+        return dst;
+    }
+    
+    
+    /**
+     * 对图像进行Sobel 运算，得到图像的一阶水平方向导数
+     * @param inMat
+     * @param debug
+     * @param tempPath
+     * @return
+     */
+    public static final int SOBEL_SCALE = 1;
+    public static final int SOBEL_DELTA = 0;
+    public static final int SOBEL_DDEPTH = opencv_core.CV_16S;
+    public static final int SOBEL_X_WEIGHT = 1;
+    public static final int SOBEL_Y_WEIGHT = 0;
+    public static Mat sobel(Mat inMat, Boolean debug, String tempPath) {
+        
+        Mat dst = new Mat();
+        
+        Mat grad_x = new Mat();
+        Mat grad_y = new Mat();
+        Mat abs_grad_x = new Mat();
+        Mat abs_grad_y = new Mat();
+        
+        opencv_imgproc.Sobel(inMat, grad_x, SOBEL_DDEPTH, 1, 0, 3, SOBEL_SCALE, SOBEL_DELTA, opencv_core.BORDER_DEFAULT);
+        opencv_core.convertScaleAbs(grad_x, abs_grad_x);
+
+        opencv_imgproc.Sobel(inMat, grad_y, SOBEL_DDEPTH, 0, 1, 3, SOBEL_SCALE, SOBEL_DELTA, opencv_core.BORDER_DEFAULT);
+        opencv_core.convertScaleAbs(grad_y, abs_grad_y);
+
+        // Total Gradient (approximate)
+        opencv_core.addWeighted(abs_grad_x, SOBEL_X_WEIGHT, abs_grad_y, SOBEL_Y_WEIGHT, 0, dst);
+        
+        if (debug) {
+            opencv_imgcodecs.imwrite(tempPath + "debugSobel.jpg", dst);
+        }
+        return dst;
+    }
+    
+    
+    
+    
+    
+
+    /**
+     * rgb图像转换为hsv图像
+     * @param inMat
+     * @param debug
+     * @param tempPath
+     * @return
+     */
+    public static Mat rgb2Hsv(Mat inMat, Boolean debug, String tempPath) {
+        // 转到HSV空间进行处理
+        Mat dst = new Mat();
+        opencv_imgproc.cvtColor(inMat, dst, opencv_imgproc.CV_BGR2HSV);
+        MatVector hsvSplit = new MatVector();
+        opencv_core.split(dst, hsvSplit);
+        // 直方图均衡化是一种常见的增强图像对比度的方法，使用该方法可以增强局部图像的对比度，尤其在数据较为相似的图像中作用更加明显
+        opencv_imgproc.equalizeHist(hsvSplit.get(2), hsvSplit.get(2));
+        opencv_core.merge(hsvSplit, dst);
+        
+        if (debug) {
+            opencv_imgcodecs.imwrite(tempPath + "hsvMat_"+System.currentTimeMillis()+".jpg", dst);
+        }
+        return dst;
+    }
+    
 
     /**
      * 获取HSV中各个颜色所对应的H的范围
@@ -90,42 +189,4 @@ public class ImageUtil {
     }
 
     
-    /**
-     * rgb图像转换为hsv图像
-     * @param inMat
-     * @param debug
-     * @param tempPath
-     * @return
-     */
-    public static Mat rgb2Hsv(Mat inMat, Boolean debug, String tempPath) {
-        // 转到HSV空间进行处理
-        Mat hsvMat = new Mat(inMat.rows(), inMat.cols(), opencv_imgproc.CV_BGR2HSV);
-        opencv_imgproc.cvtColor(inMat, hsvMat, opencv_imgproc.CV_BGR2HSV);
-        MatVector hsvSplit = new MatVector();
-        opencv_core.split(hsvMat, hsvSplit);
-        // opencv_imgproc.equalizeHist(hsvSplit.get(2), hsvSplit.get(2));
-        // opencv_core.merge(hsvSplit, hsvMat);
-        
-        if (debug) {
-            opencv_imgcodecs.imwrite(tempPath + "hsvMat_"+System.currentTimeMillis()+".jpg", hsvMat);
-        }
-        return hsvMat;
-    }
-
-    
-    /**
-     * 高斯模糊
-     * @param inMat
-     * @param debug
-     * @return
-     */
-    public static Mat gaussianBlur(Mat inMat, Boolean debug, String tempPath) {
-        Mat gsMat = new Mat();
-        opencv_imgproc.GaussianBlur(inMat, gsMat, new Size(DEFAULT_GAUSSIANBLUR_SIZE, DEFAULT_GAUSSIANBLUR_SIZE), 0, 0, opencv_core.BORDER_DEFAULT);
-        if (debug) {
-            opencv_imgcodecs.imwrite(tempPath + "gaussianBlur.jpg", gsMat);
-        }
-        return gsMat;
-    }
-
 }
