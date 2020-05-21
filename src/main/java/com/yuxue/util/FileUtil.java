@@ -44,15 +44,32 @@ public class FileUtil {
         return false;
     }
 
-
+    /**
+     * 重命名文件
+     * @param file
+     * @param newName 可以是文件名，也可以是路径+文件名
+     * @return
+     */
     public static boolean renameFile(String filePath, String newName) {
         File file = new File(filePath);
         return renameFile(file, newName);
     }
 
+    /**
+     * 重命名文件
+     * @param file
+     * @param newName 可以是文件名，也可以是路径+文件名
+     * @return
+     */
     public static boolean renameFile(File file, String newName) {
         if(file.exists()) {
-            String targetPath = file.getParentFile().getAbsolutePath() + "/" + newName;
+            String targetPath = null;
+            if(newName.indexOf("/") >= 0 || newName.indexOf("\\\\") >= 0) {
+                targetPath = newName;
+            } else {
+                targetPath = file.getParentFile().getAbsolutePath() + "/" + newName;
+            }
+            
             File targetFile = new File(targetPath);
             file.renameTo(targetFile);
             return true;

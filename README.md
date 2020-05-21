@@ -60,10 +60,6 @@ debug_Contours：
 
 ![1.png](./res/doc_image/debug_Contours.jpg)
 
-debug_result：
-
-![1.png](./res/doc_image/debug_result.jpg)
-
 debug_crop：
 
 ![1.png](./res/doc_image/debug_crop_1.jpg)
