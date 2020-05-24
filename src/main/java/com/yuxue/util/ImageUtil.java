@@ -1,19 +1,25 @@
 package com.yuxue.util;
 
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.MatVector;
+import org.bytedeco.javacpp.opencv_core.RotatedRect;
 import org.bytedeco.javacpp.opencv_core.Scalar;
 import org.bytedeco.javacpp.opencv_core.Size;
+import org.bytedeco.javacpp.opencv_ml.ANN_MLP;
+import org.bytedeco.javacpp.opencv_ml.SVM;
 import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.bytedeco.javacpp.opencv_imgproc;
 
 import com.google.common.collect.Maps;
+import com.yuxue.constant.Constant;
 
 
 /**
@@ -23,38 +29,55 @@ import com.google.common.collect.Maps;
  */
 public class ImageUtil {
 
+    private static SVM svm = SVM.create();
+    
+    private static ANN_MLP ann=ANN_MLP.create();
+    
+   
     private static String DEFAULT_BASE_TEST_PATH = "D:/PlateDetect/temp/";
-
+    
+    public static void loadSVM(String path) {
+        svm.clear();
+        svm=SVM.load(path);
+    }
+    
+    // 加载ann配置文件  图像转文字的训练库文件
+    public static void loadModel(String path) {
+        ann.clear();
+        ann = ANN_MLP.load(path);
+    }
+    
     // 车牌定位处理步骤，该map用于表示步骤图片的顺序
     private static Map<String, Integer> debugMap = Maps.newLinkedHashMap();
     static {
         // debugMap.put("result", 99);
-        debugMap.put("gaussianBlur", 0); // 高斯模糊
-        debugMap.put("gray", 1);  // 图像灰度化
-        debugMap.put("sobel", 2); // Sobel 算子
-        debugMap.put("threshold", 3); //图像二值化
-        debugMap.put("morphology", 4); // 图像闭操作
-        debugMap.put("contours", 5); // 提取外部轮廓
-        debugMap.put("result", 6); // 原图处理结果
-        debugMap.put("crop", 7); // 切图
-        debugMap.put("resize", 8); // 切图resize
-        debugMap.put("char_threshold", 9); // 
+        debugMap.put("yuantu", 0); // 高斯模糊
+        debugMap.put("gaussianBlur", 1); // 高斯模糊
+        debugMap.put("gray", 2);  // 图像灰度化
+        debugMap.put("sobel", 3); // Sobel 算子
+        debugMap.put("threshold", 4); //图像二值化
+        debugMap.put("morphology", 5); // 图像闭操作
+        debugMap.put("contours", 6); // 提取外部轮廓
+        debugMap.put("screenblock", 7); // 提取外部轮廓
+        debugMap.put("result", 8); // 原图处理结果
+        debugMap.put("crop", 9); // 切图
+        debugMap.put("resize", 10); // 切图resize
+        debugMap.put("char_threshold", 11); // 
         // debugMap.put("char_clearLiuDing", 10); // 去除柳钉
         // debugMap.put("specMat", 11); 
         // debugMap.put("chineseMat", 12);
         // debugMap.put("char_auxRoi", 13);
+        
+        // 加载训练库文件
+        //loadModel(Constant.DEFAULT_ANN_PATH);
+        //loadSVM(Constant.DEFAULT_SVM_PATH);
     }
 
 
     public static void main(String[] args) {
         
-        String filename = DEFAULT_BASE_TEST_PATH + "test.jpg";
-        // String filename = DEFAULT_BASE_TEST_PATH + "test01.jpg";
-
-        String tempPath = DEFAULT_BASE_TEST_PATH + System.currentTimeMillis() + "/";
-        FileUtil.createDir(tempPath); // 创建文件夹
-        
-        FileUtil.renameFile(filename, tempPath + "000_yuantu.jpg");
+        String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
+        String filename = tempPath + "/100_yuantu.jpg";
         
         Mat inMat = opencv_imgcodecs.imread(filename);
 
@@ -65,6 +88,12 @@ public class ImageUtil {
         Mat grey = ImageUtil.grey(gsMat, debug, tempPath);
 
         Mat sobel = ImageUtil.sobel(grey, debug, tempPath);
+        
+        Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
+        
+        Mat morphology = ImageUtil.morphology(threshold, debug, tempPath);
+        
+        MatVector contours = ImageUtil.contours(inMat, morphology, debug, tempPath);
 
 
         // ImageUtil.rgb2Hsv(inMat, debug, tempPath);
@@ -88,7 +117,7 @@ public class ImageUtil {
         return dst;
     }
 
-
+    
     /**
      * 将图像进行灰度化
      * @param inMat
@@ -133,7 +162,6 @@ public class ImageUtil {
         opencv_imgproc.Sobel(inMat, grad_y, SOBEL_DDEPTH, 0, 1, 3, SOBEL_SCALE, SOBEL_DELTA, opencv_core.BORDER_DEFAULT);
         opencv_core.convertScaleAbs(grad_y, abs_grad_y);
 
-        // Total Gradient (approximate)
         opencv_core.addWeighted(abs_grad_x, SOBEL_X_WEIGHT, abs_grad_y, SOBEL_Y_WEIGHT, 0, dst);
 
         if (debug) {
@@ -141,7 +169,6 @@ public class ImageUtil {
         }
         return dst;
     }
-
 
 
     /**
@@ -161,9 +188,6 @@ public class ImageUtil {
     }
 
 
-
-
-   
     /**
      * 使用闭操作。对图像进行闭操作以后，可以看到车牌区域被连接成一个矩形装的区域
      * @param inMat
@@ -205,13 +229,97 @@ public class ImageUtil {
         if (debug) {
             // 将轮廓描绘到原图
             opencv_imgproc.drawContours(src, contours, -1, new Scalar(0, 0, 255, 255));
+            // 输出带轮廓的原图
             opencv_imgcodecs.imwrite(tempPath + (debugMap.get("contours") + 100) + "_contours.jpg", src);
         }
         return contours;
     }
     
     
+    /**
+     * 根据轮廓， 筛选出可能是车牌的图块
+     * @param src
+     * @param matVector
+     * @param debug
+     * @param tempPath
+     * @return
+     */
+    final static float DEFAULT_ERROR = 0.6f;
+    final static float DEFAULT_ASPECT = 3.75f;
+    public static final int DEFAULT_VERIFY_MIN = 3;
+    public static final int DEFAULT_VERIFY_MAX = 20;
+    public static final int DEFAULT_ANGLE = 30; // 角度判断所用常量
+    public static Vector<Mat> screenBlock(Mat src, MatVector contours, Boolean debug, String tempPath){
+        MatVector rects = new MatVector();
+        // Vector<RotatedRect> rects = new Vector<RotatedRect>();
+        for (int i = 0; i < contours.size(); ++i) {
+            // RotatedRect 该类表示平面上的旋转矩形，有三个属性： 矩形中心点(质心); 边长(长和宽); 旋转角度
+            RotatedRect mr = opencv_imgproc.minAreaRect(contours.get(i));
+            
+            float angle = Math.abs(mr.angle());
+            
+            if (verifySizes(mr)) {
+                // rects.add(mr);
+                // 判断旋转角度 ±30°
+                if (angle <= DEFAULT_ANGLE) {
+                    rects.put(mr);
+                    // 旋转角度
+                    Mat rotmat = opencv_imgproc.getRotationMatrix2D(mr.center(), angle, 1);
+                    Mat img_rotated = new Mat();
+                    opencv_imgproc.warpAffine(src, img_rotated, rotmat, src.size()); // CV_INTER_CUBIC
+                    
+                }
+            }
+        }
+        
+        if (debug) {
+            // 将轮廓描绘到原图
+            opencv_imgproc.drawContours(src, rects, -1, new Scalar(0, 0, 255, 255));
+            // 输出带轮廓的原图
+            opencv_imgcodecs.imwrite(tempPath + (debugMap.get("screenblock") + 100) + "_screenblock.jpg", src);
+        }
+        
+        return null;
+    }
     
+    /**
+    * 对minAreaRect获得的最小外接矩形，用纵横比进行判断
+    * @param mr
+    * @return
+    */
+   private static boolean verifySizes(RotatedRect mr) {
+
+       // China car plate size: 440mm*140mm，aspect 3.142857      
+       int min = 44 * 14 * DEFAULT_VERIFY_MIN;
+       int max = 44 * 14 * DEFAULT_VERIFY_MAX;
+       
+       // Get only patchs that match to a respect ratio.
+       float rmin = DEFAULT_ASPECT - DEFAULT_ASPECT * DEFAULT_ERROR;
+       float rmax = DEFAULT_ASPECT + DEFAULT_ASPECT * DEFAULT_ERROR;
+
+       // 计算面积
+       int area = (int) (mr.size().height() * mr.size().width());
+       // 计算纵横比
+       float r = mr.size().width() / mr.size().height();
+       if (r < 1) {
+           r = mr.size().height() / mr.size().width();
+       }
+       return min <= area && area <= max && rmin <= r && r <= rmax;
+   }
+    
+    
+    
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
     
 
     /**
