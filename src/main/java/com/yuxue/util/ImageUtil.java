@@ -1,6 +1,5 @@
 package com.yuxue.util;
 
-
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +18,6 @@ import org.bytedeco.javacpp.opencv_imgcodecs;
 import org.bytedeco.javacpp.opencv_imgproc;
 
 import com.google.common.collect.Maps;
-import com.yuxue.constant.Constant;
 
 
 /**
@@ -30,23 +28,23 @@ import com.yuxue.constant.Constant;
 public class ImageUtil {
 
     private static SVM svm = SVM.create();
-    
+
     private static ANN_MLP ann=ANN_MLP.create();
-    
-   
+
+
     private static String DEFAULT_BASE_TEST_PATH = "D:/PlateDetect/temp/";
-    
-    public static void loadSVM(String path) {
+
+    public static void loadSvmModel(String path) {
         svm.clear();
         svm=SVM.load(path);
     }
-    
+
     // 加载ann配置文件  图像转文字的训练库文件
-    public static void loadModel(String path) {
+    public static void loadAnnModel(String path) {
         ann.clear();
         ann = ANN_MLP.load(path);
     }
-    
+
     // 车牌定位处理步骤，该map用于表示步骤图片的顺序
     private static Map<String, Integer> debugMap = Maps.newLinkedHashMap();
     static {
@@ -67,36 +65,40 @@ public class ImageUtil {
         // debugMap.put("specMat", 11); 
         // debugMap.put("chineseMat", 12);
         // debugMap.put("char_auxRoi", 13);
-        
+
         // 加载训练库文件
-        //loadModel(Constant.DEFAULT_ANN_PATH);
-        //loadSVM(Constant.DEFAULT_SVM_PATH);
+        //loadAnnModel(Constant.DEFAULT_ANN_PATH);
+        //loadSvmModel(Constant.DEFAULT_SVM_PATH);
     }
 
 
     public static void main(String[] args) {
-        
+
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        
-        Mat inMat = opencv_imgcodecs.imread(filename);
+
+        Mat src = opencv_imgcodecs.imread(filename);
 
         Boolean debug = true;
 
-        Mat gsMat = ImageUtil.gaussianBlur(inMat, debug, tempPath);
+        Mat gsMat = ImageUtil.gaussianBlur(src, debug, tempPath);
 
         Mat grey = ImageUtil.grey(gsMat, debug, tempPath);
 
         Mat sobel = ImageUtil.sobel(grey, debug, tempPath);
-        
-        Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
-        
-        Mat morphology = ImageUtil.morphology(threshold, debug, tempPath);
-        
-        MatVector contours = ImageUtil.contours(inMat, morphology, debug, tempPath);
 
+        Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
+
+        Mat morphology = ImageUtil.morphology(threshold, debug, tempPath);
+
+        MatVector contours = ImageUtil.contours(src, morphology, debug, tempPath);
+
+        Vector<Mat> rects = ImageUtil.screenBlock(src, contours, debug, tempPath);
 
         // ImageUtil.rgb2Hsv(inMat, debug, tempPath);
+
+
+        System.err.println("done!!!");
     }
 
 
@@ -117,7 +119,7 @@ public class ImageUtil {
         return dst;
     }
 
-    
+
     /**
      * 将图像进行灰度化
      * @param inMat
@@ -200,7 +202,7 @@ public class ImageUtil {
     public static Mat morphology(Mat inMat, Boolean debug, String tempPath) {
         Mat dst = new Mat();
         Size size = new Size(DEFAULT_MORPH_SIZE_WIDTH, DEFAULT_MORPH_SIZE_HEIGHT);
-        
+
         Mat element = opencv_imgproc.getStructuringElement(opencv_imgproc.MORPH_RECT, size);
         opencv_imgproc.morphologyEx(inMat, dst, opencv_imgproc.MORPH_CLOSE, element);
 
@@ -209,8 +211,8 @@ public class ImageUtil {
         }
         return dst;
     }
-    
-    
+
+
     /**
      * Find 轮廓 of possibles plates 求轮廓。求出图中所有的轮廓。
      * 这个算法会把全图的轮廓都计算出来，因此要进行筛选。
@@ -222,20 +224,21 @@ public class ImageUtil {
      */
     public static MatVector contours(Mat src, Mat inMat, Boolean debug, String tempPath) {
         MatVector contours = new MatVector();
-        opencv_imgproc.findContours(inMat, contours, // a vector of contours
-                opencv_imgproc.CV_RETR_EXTERNAL, // 提取外部轮廓
-                opencv_imgproc.CV_CHAIN_APPROX_NONE); // all pixels of each contours
-        
+        // 提取外部轮廓
+        opencv_imgproc.findContours(inMat, contours, opencv_imgproc.CV_RETR_EXTERNAL,  opencv_imgproc.CV_CHAIN_APPROX_NONE);
+
         if (debug) {
+            Mat result = new Mat();
+            src.copyTo(result); //  复制一张图，不在原图上进行操作，防止后续需要使用原图
             // 将轮廓描绘到原图
-            opencv_imgproc.drawContours(src, contours, -1, new Scalar(0, 0, 255, 255));
+            opencv_imgproc.drawContours(result, contours, -1, new Scalar(0, 0, 255, 255));
             // 输出带轮廓的原图
-            opencv_imgcodecs.imwrite(tempPath + (debugMap.get("contours") + 100) + "_contours.jpg", src);
+            opencv_imgcodecs.imwrite(tempPath + (debugMap.get("contours") + 100) + "_contours.jpg", result);
         }
         return contours;
     }
-    
-    
+
+
     /**
      * 根据轮廓， 筛选出可能是车牌的图块
      * @param src
@@ -249,78 +252,94 @@ public class ImageUtil {
     public static final int DEFAULT_VERIFY_MIN = 3;
     public static final int DEFAULT_VERIFY_MAX = 20;
     public static final int DEFAULT_ANGLE = 30; // 角度判断所用常量
+    public static final int WIDTH = 136;
+    public static final int HEIGHT = 36;
+    public static final int TYPE = opencv_core.CV_8UC3;
+    @SuppressWarnings("resource")
     public static Vector<Mat> screenBlock(Mat src, MatVector contours, Boolean debug, String tempPath){
-        MatVector rects = new MatVector();
-        // Vector<RotatedRect> rects = new Vector<RotatedRect>();
+
+        Vector<Mat> dst = new Vector<Mat>();
+        MatVector mv = new MatVector();
         for (int i = 0; i < contours.size(); ++i) {
             // RotatedRect 该类表示平面上的旋转矩形，有三个属性： 矩形中心点(质心); 边长(长和宽); 旋转角度
             RotatedRect mr = opencv_imgproc.minAreaRect(contours.get(i));
-            
+
             float angle = Math.abs(mr.angle());
-            
-            if (verifySizes(mr)) {
-                // rects.add(mr);
-                // 判断旋转角度 ±30°
-                if (angle <= DEFAULT_ANGLE) {
-                    rects.put(mr);
-                    // 旋转角度
-                    Mat rotmat = opencv_imgproc.getRotationMatrix2D(mr.center(), angle, 1);
-                    Mat img_rotated = new Mat();
-                    opencv_imgproc.warpAffine(src, img_rotated, rotmat, src.size()); // CV_INTER_CUBIC
-                    
+
+            if (verifySizes(mr) && angle <= DEFAULT_ANGLE) {  // 判断尺寸及旋转角度 ±30°，排除不合法的图块
+
+                if (debug) {    // 描绘出筛选后的轮廓
+                    mv.put(contours.get(i));
+                    Mat result = new Mat();
+                    src.copyTo(result); //  复制一张图，不在原图上进行操作，防止后续需要使用原图
+                    // 将轮廓描绘到原图
+                    opencv_imgproc.drawContours(result, mv, -1, new Scalar(0, 0, 255, 255));
+                    // 输出带轮廓的原图
+                    opencv_imgcodecs.imwrite(tempPath + (debugMap.get("screenblock") + 100) + "_screenblock.jpg", result);
                 }
+
+                // 旋转角度，根据需要是否进行角度旋转
+                Size rect_size = new Size((int) mr.size().width(), (int) mr.size().height());
+                if (mr.size().width() / mr.size().height() < 1) {   // 宽度小于高度
+                    angle = 90 + angle; // 旋转90°
+                    rect_size = new Size(rect_size.height(), rect_size.width());
+                }
+                Mat rotmat = opencv_imgproc.getRotationMatrix2D(mr.center(), angle, 1);
+                Mat img_rotated = new Mat();
+                opencv_imgproc.warpAffine(src, img_rotated, rotmat, src.size()); // CV_INTER_CUBIC
+
+                // 切图
+                Mat img_crop = new Mat();
+                opencv_imgproc.getRectSubPix(src, rect_size, mr.center(), img_crop);
+
+                if (debug) {
+                    opencv_imgcodecs.imwrite(tempPath + (debugMap.get("crop") + 100) + "_crop_" + i + ".jpg", img_crop);
+                }
+
+                // 处理切图，调整为指定大小
+                Mat resized = new Mat(HEIGHT, WIDTH, TYPE);
+                opencv_imgproc.resize(img_crop, resized, resized.size(), 0, 0, opencv_imgproc.INTER_CUBIC);
+                if (debug) {
+                    opencv_imgcodecs.imwrite(tempPath + (debugMap.get("resize") + 100) + "_resize_" + i + ".jpg", resized);
+                }
+                dst.add(resized);
             }
         }
-        
-        if (debug) {
-            // 将轮廓描绘到原图
-            opencv_imgproc.drawContours(src, rects, -1, new Scalar(0, 0, 255, 255));
-            // 输出带轮廓的原图
-            opencv_imgcodecs.imwrite(tempPath + (debugMap.get("screenblock") + 100) + "_screenblock.jpg", src);
-        }
-        
-        return null;
+
+        return  dst;
     }
-    
+
     /**
-    * 对minAreaRect获得的最小外接矩形，用纵横比进行判断
-    * @param mr
-    * @return
-    */
-   private static boolean verifySizes(RotatedRect mr) {
+     * 对minAreaRect获得的最小外接矩形，用纵横比进行判断
+     * @param mr
+     * @return
+     */
+    private static boolean verifySizes(RotatedRect mr) {
 
-       // China car plate size: 440mm*140mm，aspect 3.142857      
-       int min = 44 * 14 * DEFAULT_VERIFY_MIN;
-       int max = 44 * 14 * DEFAULT_VERIFY_MAX;
-       
-       // Get only patchs that match to a respect ratio.
-       float rmin = DEFAULT_ASPECT - DEFAULT_ASPECT * DEFAULT_ERROR;
-       float rmax = DEFAULT_ASPECT + DEFAULT_ASPECT * DEFAULT_ERROR;
+        // China car plate size: 440mm*140mm，aspect 3.142857      
+        int min = 44 * 14 * DEFAULT_VERIFY_MIN;
+        int max = 44 * 14 * DEFAULT_VERIFY_MAX;
 
-       // 计算面积
-       int area = (int) (mr.size().height() * mr.size().width());
-       // 计算纵横比
-       float r = mr.size().width() / mr.size().height();
-       if (r < 1) {
-           r = mr.size().height() / mr.size().width();
-       }
-       return min <= area && area <= max && rmin <= r && r <= rmax;
-   }
-    
-    
-    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-    
+        // Get only patchs that match to a respect ratio.
+        float rmin = DEFAULT_ASPECT - DEFAULT_ASPECT * DEFAULT_ERROR;
+        float rmax = DEFAULT_ASPECT + DEFAULT_ASPECT * DEFAULT_ERROR;
+
+        // 计算面积
+        int area = (int) (mr.size().height() * mr.size().width());
+        // 计算纵横比
+        float r = mr.size().width() / mr.size().height();
+        if (r < 1) {
+            r = mr.size().height() / mr.size().width();
+        }
+        return min <= area && area <= max && rmin <= r && r <= rmax;
+    }
+
+
+
+
+
+
+
 
     /**
      * rgb图像转换为hsv图像
