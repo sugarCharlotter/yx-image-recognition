@@ -193,7 +193,7 @@ public class PlateLocate {
         int k = 1;
         for (int i = 0; i < rects.size(); i++) {
             RotatedRect minRect = rects.get(i);
-            if (debug) {
+            /*if (debug) {
                 Point2f rect_points = new Point2f(4);
                 minRect.points(rect_points);
 
@@ -203,7 +203,7 @@ public class PlateLocate {
 
                     line(result, pt1, pt2, new Scalar(0, 255, 255, 255), 1, 8, 0);
                 }
-            }
+            }*/
 
             // rotated rectangle drawing
             // 旋转这部分代码确实可以将某些倾斜的车牌调整正，但是它也会误将更多正的车牌搞成倾斜！所以综合考虑，还是不使用这段代码。
@@ -218,9 +218,8 @@ public class PlateLocate {
             }
             // 如果抓取的方块旋转超过m_angle角度，则不是车牌，放弃处理
             if (angle - this.angle < 0 && angle + this.angle > 0) {
-                // Create and rotate image
-                Mat rotmat = getRotationMatrix2D(minRect.center(), angle, 1);
                 Mat img_rotated = new Mat();
+                Mat rotmat = getRotationMatrix2D(minRect.center(), angle, 1);
                 warpAffine(src, img_rotated, rotmat, src.size()); // CV_INTER_CUBIC
 
                 Mat resultMat = showResultMat(img_rotated, rect_size, minRect.center(), k++);
