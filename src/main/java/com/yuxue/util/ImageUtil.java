@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_core.Mat;
 import org.bytedeco.javacpp.opencv_core.MatVector;
@@ -79,7 +80,7 @@ public class ImageUtil {
 
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        // filename = tempPath + "/100_yuantu1.jpg";
+        filename = tempPath + "/100_yuantu1.jpg";
 
         Mat src = opencv_imgcodecs.imread(filename);
 
@@ -90,12 +91,12 @@ public class ImageUtil {
         Mat grey = ImageUtil.grey(gsMat, debug, tempPath);
 
         Mat sobel = ImageUtil.sobel(grey, debug, tempPath);
-        
+
         // Mat sobel = ImageUtil.scharr(grey, debug, tempPath);
 
-        Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
+        // Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
 
-        Mat morphology = ImageUtil.morphology(threshold, debug, tempPath);
+        Mat morphology = ImageUtil.morphology(ImageUtil.threshold(sobel, debug, tempPath), debug, tempPath);
 
         MatVector contours = ImageUtil.contours(src, morphology, debug, tempPath);
 
@@ -139,6 +140,7 @@ public class ImageUtil {
         if (debug) {
             opencv_imgcodecs.imwrite(tempPath + (debugMap.get("gray") + 100) + "_gray.jpg", dst);
         }
+        inMat.release();
         return dst;
     }
 
@@ -174,14 +176,14 @@ public class ImageUtil {
         opencv_core.addWeighted(abs_grad_x, SOBEL_X_WEIGHT, abs_grad_y, SOBEL_Y_WEIGHT, 0, dst);
         abs_grad_x.release();
         abs_grad_y.release();
-        
+
         if (debug) {
             opencv_imgcodecs.imwrite(tempPath + (debugMap.get("sobel") + 100) + "_sobel.jpg", dst);
         }
         return dst;
     }
-    
-    
+
+
     /**
      * 对图像进行scharr 运算，得到图像的一阶水平方向导数
      * @param inMat
@@ -197,7 +199,7 @@ public class ImageUtil {
         Mat grad_y = new Mat();
         Mat abs_grad_x = new Mat();
         Mat abs_grad_y = new Mat();
-        
+
         //注意求梯度的时候我们使用的是Scharr算法，sofia算法容易收到图像细节的干扰
         //所谓梯度运算就是对图像中的像素点进行就导数运算，从而得到相邻两个像素点的差异值 by:Tantuo
         opencv_imgproc.Scharr(inMat, grad_x, opencv_core.CV_32F, 1, 0);
@@ -217,7 +219,7 @@ public class ImageUtil {
         }
         return dst;
     }
-    
+
 
     /**
      * 对图像进行二值化。将灰度图像（每个像素点有256 个取值可能）
@@ -230,18 +232,10 @@ public class ImageUtil {
     public static Mat threshold(Mat inMat, Boolean debug, String tempPath) {
         Mat dst = new Mat();
         opencv_imgproc.threshold(inMat, dst, 0, 255, opencv_imgproc.CV_THRESH_OTSU + opencv_imgproc.CV_THRESH_BINARY);
-        
-        /*for (int i = 0; i < dst.rows(); i++) {
-            for (int j = 0; j < dst.cols(); j++) {
-                if(dst.ptr(i, j).getInt() !=0 ) {
-                    System.err.println(i + "\t" + j + "\t" +dst.ptr(i, j).getInt());
-                }
-            }
-        }*/
-        
         if (debug) {
             opencv_imgcodecs.imwrite(tempPath + (debugMap.get("threshold") + 100) + "_threshold.jpg", dst);
         }
+        inMat.release();
         return dst;
     }
 
@@ -258,25 +252,21 @@ public class ImageUtil {
     public static final int DEFAULT_MORPH_SIZE_WIDTH = 9;
     public static final int DEFAULT_MORPH_SIZE_HEIGHT = 3;
     public static Mat morphology(Mat inMat, Boolean debug, String tempPath) {
-        Mat dst = new Mat();
+        Mat dst = new Mat(inMat.size(), opencv_core.CV_8UC1);
         Size size = new Size(DEFAULT_MORPH_SIZE_WIDTH, DEFAULT_MORPH_SIZE_HEIGHT);
-
         Mat element = opencv_imgproc.getStructuringElement(opencv_imgproc.MORPH_RECT, size);
         opencv_imgproc.morphologyEx(inMat, dst, opencv_imgproc.MORPH_CLOSE, element);
 
         if (debug) {
             opencv_imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
         }
-        
+
         // 去除小连通区域
-        removeSmallRegion(dst, dst, 100, 1, 1, debug, tempPath);
+        // removeSmallRegion(dst, dst, 100, 1, 1, debug, tempPath);
         // 去除孔洞
-        removeSmallRegion(dst, dst, 100, 0, 0, debug, tempPath);
+        // removeSmallRegion(dst, dst, 100, 0, 0, debug, tempPath);
         
-        if (debug) {
-            opencv_imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", dst);
-        }
-        
+        clearHole(dst, 136/10, 36/10, debug, tempPath);
         return dst;
     }
 
@@ -303,7 +293,7 @@ public class ImageUtil {
         for (int i = 0; i < contours.size(); i++) {
             retContour.put(contours.get(i));
         }*/
-        
+
         if (debug) {
             Mat result = new Mat();
             src.copyTo(result); //  复制一张图，不在原图上进行操作，防止后续需要使用原图
@@ -338,23 +328,23 @@ public class ImageUtil {
             // RotatedRect 该类表示平面上的旋转矩形，有三个属性： 矩形中心点(质心); 边长(长和宽); 旋转角度
             // boundingRect()得到包覆此轮廓的最小正矩形， minAreaRect()得到包覆轮廓的最小斜矩形
             RotatedRect mr = opencv_imgproc.minAreaRect(contours.get(i));
-            
+
             float angle = Math.abs(mr.angle());
-            
+
             if (checkPlateSize(mr) && angle <= DEFAULT_ANGLE) {  // 判断尺寸及旋转角度 ±30°，排除不合法的图块
                 mv.put(contours.get(i));
-               
+
                 Size rect_size = new Size((int) mr.size().width(), (int) mr.size().height());
                 if (mr.size().width() / mr.size().height() < 1) {   // 宽度小于高度
                     angle = 90 + angle; // 旋转90°
                     rect_size = new Size(rect_size.height(), rect_size.width());
                 }
-                
+
                 // 旋转角度，根据需要是否进行角度旋转
                 Mat img_rotated = new Mat();
                 Mat rotmat = opencv_imgproc.getRotationMatrix2D(mr.center(), angle, 1); // 旋转
                 opencv_imgproc.warpAffine(src, img_rotated, rotmat, src.size()); // 仿射变换
-                
+
                 // 切图
                 Mat img_crop = new Mat();
                 opencv_imgproc.getRectSubPix(src, rect_size, mr.center(), img_crop);
@@ -417,6 +407,7 @@ public class ImageUtil {
         }
 
         return min <= area && area <= max && rmin <= r && r <= rmax;
+        
     }
 
 
@@ -499,9 +490,9 @@ public class ImageUtil {
 
         return;
     }
-    
-    
-    
+
+
+
     /**
      * 计算最大内接矩形
      * https://blog.csdn.net/cfqcfqcfqcfqcfq/article/details/53084090
@@ -514,7 +505,7 @@ public class ImageUtil {
         edge[1] = (int) point2f.x() + 1;//right
         edge[2] = (int) point2f.y() - 1;//bottom
         edge[3] = (int) point2f.x() - 1;//left
-        
+
         boolean[] expand = { true, true, true, true};//扩展标记位
         int n = 0;
         while (expand[0] || expand[1] || expand[2] || expand[3]){
@@ -530,15 +521,15 @@ public class ImageUtil {
 
         return null;
     }
-    
-    
-   /**
-    * @brief expandEdge 扩展边界函数
-    * @param img:输入图像，单通道二值图，深度为8
-    * @param edge  边界数组，存放4条边界值
-    * @param edgeID 当前边界号
-    * @return 布尔值 确定当前边界是否可以扩展
-    */
+
+
+    /**
+     * @brief expandEdge 扩展边界函数
+     * @param img:输入图像，单通道二值图，深度为8
+     * @param edge  边界数组，存放4条边界值
+     * @param edgeID 当前边界号
+     * @return 布尔值 确定当前边界是否可以扩展
+     */
     public static boolean expandEdge(Mat img, int edge[], int edgeID) {
         int nc = img.cols();
         int nr = img.rows();
@@ -590,7 +581,7 @@ public class ImageUtil {
         }
     }
 
-    
+
     /**
      * 对于二值图，0代表黑色，255代表白色。
      * 去除小连通区域与孔洞，小连通区域用8邻域，孔洞用4邻域
@@ -663,7 +654,7 @@ public class ImageUtil {
                             }
                         }
                     }
-                    
+
                     if (GrowBuffer.size() > AreaLimit) { // 判断结果（是否超出限定的大小），1为未超出，2为超出
                         CheckResult = 2;
                     } else {
@@ -690,5 +681,80 @@ public class ImageUtil {
             }
         }
     }
+
+
+    /**
+     * 清除二值图像的黑洞
+     * 按矩形清理
+     * @param inMat  二值图像 
+     * @param rowLimit 宽度半径限制
+     * @param colsLimit 高度半径限制
+     * @param debug 
+     * @param tempPath
+     */
+    public static void clearHole(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
+        int uncheck = 0, checking = 1, black = 2, white = 3;
+
+        Mat dst = new Mat(inMat.size(), opencv_core.CV_8UC1);
+        inMat.copyTo(dst);
+        rowLimit = 2;                    
+        colsLimit = 2;
+        
+        // 初始化的图像全部为0，未检查; 全黑图像
+        Mat label = new Mat(inMat.size(), opencv_core.CV_8UC1);
+
+        // 标记所有的白色区域
+        for (int i = 0; i < inMat.rows(); i++) {
+            for (int j = 0; j < inMat.cols(); j++) {
+                if (inMat.ptr(i, j).getInt() != 0) {   // 对于二值图，0代表黑色，255代表白色
+                    label.ptr(i, j).putInt(white);
+                    
+                    int x1 = i - rowLimit < 0 ? 0 : i - rowLimit;
+                    int x2 = i + rowLimit > inMat.rows() ? inMat.rows() : i + rowLimit;
+                    int y1 = j - colsLimit < 0 ? 0 : j - colsLimit ;
+                    int y2 = j + colsLimit > inMat.cols() ? inMat.cols() : j + colsLimit ;
+                    
+                    /*IntPointer p1 = new IntPointer(x1, y1); // 左上角
+                    IntPointer p2 = new IntPointer(x1, y2); // 左下角
+                    IntPointer p3 = new IntPointer(x2, y1); // 右上角
+                    IntPointer p4 = new IntPointer(x2, y2); // 右下角
+                    */                    
+                    // System.out.println(x1 + "," + x2 + "\t" + y1 + "," + y2 + "\n");
+                    // System.out.println(inMat.ptr(x1, y1).getInt() + "," + inMat.ptr(x1, y2).getInt() + "," + inMat.ptr(x2, y1).getInt() + "," + inMat.ptr(x2, y2).getInt());
+                    
+                    //if(inMat.ptr(x1, y1).getInt() > 10 && inMat.ptr(x1, y2).getInt() > 10 && inMat.ptr(x2, y1).getInt() > 10  && inMat.ptr(x2, y2).getInt() > 10 ) {
+                        for (int n = x1; n < x2; n++) {
+                            for (int m = y1; m < y2; m++) {
+                                //System.err.println(n + "," + m);
+                                if (/*inMat.ptr(n, m).getInt() < 10 && */label.ptr(n, m).getInt() == uncheck) {
+                                    // System.err.println(n + "," + m);
+                                    label.ptr(n, m).putInt(black);
+                                }
+                            }
+                        }
+                    // }
+                }
+            }
+        }
+        // 1184 //1550
+        int count = 0;
+        // 替换颜色
+        for (int i = 0; i < inMat.rows(); i++) {
+            for (int j = 0; j < inMat.cols(); j++) {
+                if(label.ptr(i, j).getInt() == black) {
+                    dst.ptr(i, j).putInt(255);
+                    count ++;
+                }
+            }
+        }
+        System.err.println(count);
+        
+        if (debug) {
+            opencv_imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", dst);
+        }
+    }
+
+
+
 
 }
