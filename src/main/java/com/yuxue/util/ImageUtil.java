@@ -25,7 +25,7 @@ import com.google.common.collect.Maps;
 
 /**
  * 车牌图片处理工具类
- * 开发测试中...
+ * 将原图，经过算法处理，得到车牌的图块
  * @author yuxue
  * @date 2020-05-18 12:07
  */
@@ -368,26 +368,26 @@ public class ImageUtil {
     /**
      * 对minAreaRect获得的最小外接矩形
      * 判断面积以及宽高比是否在制定的范围内
-     * 黄牌、蓝牌
+     * 黄牌、蓝牌、绿牌
+     * 国内车牌大小: 440mm*140mm，宽高比 3.142857
      * @param mr
      * @return
      */
-    final static float DEFAULT_ERROR = 0.6f;
-    final static float DEFAULT_ASPECT = 3.75f;
-    public static final int DEFAULT_VERIFY_MIN = 3;
-    public static final int DEFAULT_VERIFY_MAX = 20;
+    final static float DEFAULT_ERROR = 0.7f;    // 宽高比允许70%误差
+    final static float DEFAULT_ASPECT = 3.142857f;
+    public static final int DEFAULT_VERIFY_MIN = 1;
+    public static final int DEFAULT_VERIFY_MAX = 30;
     /*final static float DEFAULT_ERROR = 0.9f;
     final static float DEFAULT_ASPECT = 4f;
     public static final int DEFAULT_VERIFY_MIN = 1;
     public static final int DEFAULT_VERIFY_MAX = 30;*/
     private static boolean checkPlateSize(RotatedRect mr) {
-
-        // 国内车牌大小: 440mm*140mm，宽高比 3.142857
+        
         // 切图面积取值范围
         int min = 44 * 14 * DEFAULT_VERIFY_MIN;
         int max = 44 * 14 * DEFAULT_VERIFY_MAX;
 
-        // 切图横纵比取值范围
+        // 切图横纵比取值范围；关键在于纵横比例
         float rmin = DEFAULT_ASPECT - DEFAULT_ASPECT * DEFAULT_ERROR;
         float rmax = DEFAULT_ASPECT + DEFAULT_ASPECT * DEFAULT_ERROR;
 
