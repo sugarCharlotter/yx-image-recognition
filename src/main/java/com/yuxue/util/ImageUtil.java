@@ -18,8 +18,6 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.ml.ANN_MLP;
-import org.opencv.ml.SVM;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -35,21 +33,6 @@ public class ImageUtil {
 
     private static String DEFAULT_BASE_TEST_PATH = "D:/PlateDetect/temp/";
     
-    /*private static SVM svm = SVM.create();
-
-    private static ANN_MLP ann=ANN_MLP.create();
-
-    public static void loadSvmModel(String path) {
-        svm.clear();
-        svm=SVM.load(path);
-    }
-
-    // 加载ann配置文件  图像转文字的训练库文件
-    public static void loadAnnModel(String path) {
-        ann.clear();
-        ann = ANN_MLP.load(path);
-    }*/
-
     static {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
@@ -85,7 +68,7 @@ public class ImageUtil {
 
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        //filename = tempPath + "/100_yuantu1.jpg";
+        filename = tempPath + "/100_yuantu2.jpg";
         //filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
@@ -109,7 +92,6 @@ public class ImageUtil {
 
         // ImageUtil.rgb2Hsv(src, debug, tempPath);
         // ImageUtil.getHSVValue(src, debug, tempPath);
-
 
         System.err.println("done!!!");
     }
@@ -268,15 +250,19 @@ public class ImageUtil {
         Size size = new Size(DEFAULT_MORPH_SIZE_WIDTH, DEFAULT_MORPH_SIZE_HEIGHT);
         Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, size);
         Imgproc.morphologyEx(inMat, dst, Imgproc.MORPH_CLOSE, element);
+        if (debug) {
+            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
+        }
+        
         // 去除小连通区域
-        Mat a = clearSmallConnArea(dst, 3, 8, false, tempPath);
-        Mat b = clearSmallConnArea(a, 8, 3, false, tempPath);
+        Mat a = clearSmallConnArea(dst, 3, 10, false, tempPath);
+        Mat b = clearSmallConnArea(a, 10, 3, false, tempPath);
         // 去除孔洞
-        Mat c = clearHole(b, 3, 8, false, tempPath);
-        Mat d = clearHole(c, 3, 8, false, tempPath);
+        Mat c = clearHole(b, 3, 10, false, tempPath);
+        Mat d = clearHole(c, 10, 3, false, tempPath);
         
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", d);
+            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", d);
         }
         return d;
     }
@@ -415,15 +401,7 @@ public class ImageUtil {
         return min <= area && area <= max && rmin <= r && r <= rmax;
     }
 
-
-
-
-
-
-
-
-
-
+    
     /**
      * rgb图像转换为hsv图像
      * @param inMat
