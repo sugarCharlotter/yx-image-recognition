@@ -11,6 +11,8 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -20,21 +22,6 @@ import org.opencv.ml.ANN_MLP;
 import org.opencv.ml.SVM;
 
 import com.google.common.collect.Lists;
-/*
-import org.bytedeco.javacpp.BytePointer;
-import org.bytedeco.javacpp.opencv_core;
-import org.bytedeco.javacpp.Core.Mat;
-import org.bytedeco.javacpp.Core.MatVector;
-import org.bytedeco.javacpp.Core.Point2d;
-import org.bytedeco.javacpp.Core.Point2f;
-import org.bytedeco.javacpp.Core.RotatedRect;
-import org.bytedeco.javacpp.Core.Scalar;
-import org.bytedeco.javacpp.Core.Size;
-import org.bytedeco.javacpp.opencv_ml.ANN_MLP;
-import org.bytedeco.javacpp.opencv_ml.SVM;
-import org.bytedeco.javacpp.opencv_imgcodecs;
-import org.bytedeco.javacpp.opencv_imgproc;
-*/
 import com.google.common.collect.Maps;
 
 
@@ -281,16 +268,16 @@ public class ImageUtil {
         Size size = new Size(DEFAULT_MORPH_SIZE_WIDTH, DEFAULT_MORPH_SIZE_HEIGHT);
         Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, size);
         Imgproc.morphologyEx(inMat, dst, Imgproc.MORPH_CLOSE, element);
-
-        if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
-        }
         // 去除小连通区域
-        Mat a = clearSmallConnArea(dst, 3, 8, debug, tempPath);
-        Mat b = clearSmallConnArea(a, 8, 3, debug, tempPath);
+        Mat a = clearSmallConnArea(dst, 3, 8, false, tempPath);
+        Mat b = clearSmallConnArea(a, 8, 3, false, tempPath);
         // 去除孔洞
-        Mat c = clearHole(b, 3, 8, debug, tempPath);
-        Mat d = clearHole(c, 3, 8, debug, tempPath);
+        Mat c = clearHole(b, 3, 8, false, tempPath);
+        Mat d = clearHole(c, 3, 8, false, tempPath);
+        
+        if (debug) {
+            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", d);
+        }
         return d;
     }
 
@@ -477,8 +464,8 @@ public class ImageUtil {
         for (int i = 0; i < nRows; ++i) {
             for (int j = 0; j < nCols; j += 3) {
                 int H = (int)inMat.get(i, j)[0];
-                int S = (int)inMat.get(i, j)[1];
-                int V = (int)inMat.get(i, j)[2];
+                // int S = (int)inMat.get(i, j)[1];
+                // int V = (int)inMat.get(i, j)[2];
                 if(map.containsKey(H)) {
                     int count = map.get(H);
                     map.put(H, count+1);
@@ -487,7 +474,7 @@ public class ImageUtil {
                 }
             }
         }
-        Set set = map.keySet();
+        Set<Integer> set = map.keySet();
         Object[] arr = set.toArray();
         Arrays.sort(arr);
         for (Object key : arr) {
@@ -504,12 +491,12 @@ public class ImageUtil {
      * @param inMat
      * @return
      */
-    /*public static RotatedRect maxAreaRect(Mat threshold, Point2f point2f) {
+    public static Rect maxAreaRect(Mat threshold, Point point) {
         int edge[] = new int[4];
-        edge[0] = (int) point2f.x() + 1;//top
-        edge[1] = (int) point2f.x() + 1;//right
-        edge[2] = (int) point2f.y() - 1;//bottom
-        edge[3] = (int) point2f.x() - 1;//left
+        edge[0] = (int) point.x + 1;//top
+        edge[1] = (int) point.y + 1;//right
+        edge[2] = (int) point.y - 1;//bottom
+        edge[3] = (int) point.x - 1;//left
 
         boolean[] expand = { true, true, true, true};//扩展标记位
         int n = 0;
@@ -518,14 +505,10 @@ public class ImageUtil {
             expand[edgeID] = expandEdge(threshold, edge, edgeID);
             n++;
         }
-        //[3]
-        //qDebug() << edge[0] << edge[1] << edge[2] << edge[3];
-        Point tl = Point(edge[3], edge[0]);
-        Point br = Point(edge[1], edge[2]);
+        Point tl = new Point(edge[3], edge[0]);
+        Point br = new Point(edge[1], edge[2]);
         return new Rect(tl, br);
-
-        return null;
-    }*/
+    }
 
 
     /**
@@ -540,7 +523,7 @@ public class ImageUtil {
         int nr = img.rows();
 
         switch (edgeID) {
-        /*case 0:
+        case 0:
             if (edge[0] > nr) {
                 return false;
             }
@@ -556,7 +539,7 @@ public class ImageUtil {
                 return false;
             }
             for (int i = edge[2]; i <= edge[0]; ++i) {
-                if (img.ptr(i, edge[1]).getInt() == 255)
+                if (img.get(i, edge[1])[0] == 255)
                     return false;
             }
             edge[1]++;
@@ -566,7 +549,7 @@ public class ImageUtil {
                 return false;
             }
             for (int i = edge[3]; i <= edge[1]; ++i) {
-                if (img.ptr(edge[2], i).getInt() == 255)
+                if (img.get(edge[2], i)[0] == 255)
                     return false;
             }
             edge[2]--;
@@ -576,123 +559,20 @@ public class ImageUtil {
                 return false;
             }
             for (int i = edge[2]; i <= edge[0]; ++i) {
-                if (img.ptr(i, edge[3]).getInt() == 255)
+                if (img.get(i, edge[3])[0] == 255)
                     return false;
             }
             edge[3]--;
-            return true;*/
+            return true;
         default:
             return false;
         }
     }
 
-
-    /**
-     * 对于二值图，0代表黑色，255代表白色。
-     * 去除小连通区域与孔洞，小连通区域用8邻域，孔洞用4邻域
-     * removeSmallRegion(dst, erzhi,100, 1, 1);
-     * removeSmallRegion(erzhi, erzhi,100, 0, 0);
-     * https://blog.csdn.net/dajiyi1998/article/details/60601410#
-     * @param Src 二值图
-     * @param Dst 返回值
-     * @param AreaLimit 100
-     * @param checkMode 0代表去除黑区域，1代表去除白区域
-     * @param mode 0代表4邻域，1代表8邻域;
-     */
-    public static void removeSmallRegion(Mat Src, Mat Dst, int AreaLimit, int checkMode, int mode, Boolean debug, String tempPath) {
-        // 新建一幅标签图像初始化为0像素点，为了记录每个像素点检验状态的标签，0代表未检查，1代表正在检查,2代表检查不合格（需要反转颜色），3代表检查合格或不需检查
-        // 初始化的图像全部为0，未检查; 全黑图像
-        Mat PointLabel = new Mat(Src.size(), CvType.CV_8UC1);
-        // Imgcodecs.imwrite(tempPath + "99_remove.jpg", PointLabel);
-
-        /*if (checkMode == 1) {// 去除小连通区域的白色点
-            for (int i = 0; i < Src.rows(); i++) {
-                for (int j = 0; j < Src.cols(); j++) {
-                    if (Src.ptr(i, j).getInt() < 10) {
-                        PointLabel.ptr(i, j).putInt(3); // 将背景黑色点标记为合格，像素为3
-                    }
-                }
-            }
-        } else {// 去除孔洞，黑色点像素
-            for (int i = 0; i < Src.rows(); i++) {
-                for (int j = 0; j < Src.cols(); j++) {
-                    if (Src.ptr(i, j).getInt() > 10) {
-                        PointLabel.ptr(i, j).putInt(3);// 如果原图是白色区域，标记为合格，像素为3
-                    }
-                }
-            }
-        }
-
-        Vector<Point2d> neihbor = new Vector<Point2d>();// 将邻域压进容器
-        neihbor.add(new Point2d(-1, 0));
-        neihbor.add(new Point2d(1, 0));
-        neihbor.add(new Point2d(0, -1));
-        neihbor.add(new Point2d(0, 1));
-        if (mode == 1) { // 8邻域
-            neihbor.add(new Point2d(-1, -1));
-            neihbor.add(new Point2d(-1, 1));
-            neihbor.add(new Point2d(1, -1));
-            neihbor.add(new Point2d(1, 1));
-        }
-
-        int neihborCount = 4 + 4 * mode;
-        int CurrX = 0, CurrY = 0;
-        // 开始检测
-        for (int i = 0; i < Src.rows(); i++) {
-            for (int j = 0; j < Src.cols(); j++) {
-                if (PointLabel.ptr(i, j).getInt() == 0) {// 标签图像像素点为0，表示还未检查的不合格点
-
-                    Vector<Point2d> GrowBuffer = new Vector<Point2d>(); // 记录检查像素点的个数
-                    GrowBuffer.add(new Point2d(j, i));
-                    PointLabel.ptr(i, j).putInt(1);// 标记为正在检查
-                    int CheckResult = 0;
-
-                    for (int z = 0; z < GrowBuffer.size(); z++) {
-                        for (int q = 0; q < neihborCount; q++) {
-                            CurrX = (int) (GrowBuffer.get(z).x() + neihbor.get(q).x());
-                            CurrY = (int) (GrowBuffer.get(z).y() + neihbor.get(q).y());
-
-                            if (CurrX >= 0 && CurrX < Src.cols() && CurrY >= 0 && CurrY < Src.rows()) { // 防止越界
-                                if (PointLabel.ptr(CurrY, CurrX).getInt() == 0) {
-                                    GrowBuffer.add(new Point2d(CurrX, CurrY)); // 邻域点加入buffer
-                                    PointLabel.ptr(CurrY, CurrX).putInt(1); // 更新邻域点的检查标签，避免重复检查
-                                }
-                            }
-                        }
-                    }
-
-                    if (GrowBuffer.size() > AreaLimit) { // 判断结果（是否超出限定的大小），1为未超出，2为超出
-                        CheckResult = 2;
-                    } else {
-                        CheckResult = 1;
-                    }
-                    for (int z = 0; z < GrowBuffer.size(); z++) {
-                        CurrX = (int) GrowBuffer.get(z).x();
-                        CurrY = (int) GrowBuffer.get(z).y();
-                        PointLabel.ptr(CurrY, CurrX).putInt(CheckResult);// 标记不合格的像素点，像素值为2
-                    }
-                }
-            }
-        }
-
-        // 开始反转面积过小的区域
-        checkMode = 255 * (1 - checkMode);
-        for (int i = 0; i < Src.rows(); ++i) {
-            for (int j = 0; j < Src.cols(); ++j) {
-                if (PointLabel.ptr(i, j).getInt() == 2) {
-                    Dst.ptr(i, j).putInt(checkMode);
-                } else if (PointLabel.ptr(i, j).getInt() == 3) {
-                    Dst.ptr(i, j).put(Src.ptr(i, j));
-                }
-            }
-        }*/
-    }
-
-
     /**
      * 清除二值图像的黑洞
      * 按矩形清理
-     * @param inMat  二值图像 
+     * @param inMat  二值图像  0代表黑色，255代表白色
      * @param rowLimit 像素值
      * @param colsLimit 像素值
      * @param debug 
@@ -718,10 +598,23 @@ public class ImageUtil {
                     int y1 = j - colsLimit < 0 ? 0 : j - colsLimit ;
                     int y2 = j + colsLimit >= inMat.cols() ? inMat.cols()-1 : j + colsLimit ;
                     
+                    int count = 0;
+                    if(inMat.get(x1, y1)[0] > 10) {// 左上角
+                        count++;
+                    }
+                    if(inMat.get(x1, y2)[0] > 10) { // 左下角
+                        count++;
+                    }
+                    if(inMat.get(x2, y1)[0] > 10) { // 右上角
+                        count++;
+                    }
+                    if(inMat.get(x2, y2)[0] > 10) { // 右下角
+                        count++;
+                    }
                     
                     // 根据中心点+limit，定位四个角生成一个矩形，
                     // 将四个角都是白色的矩形，内部的黑点标记为 要被替换的对象
-                    if(inMat.get(x1, y1)[0] > 10 && inMat.get(x1, y2)[0] > 10 && inMat.get(x2, y1)[0] > 10  && inMat.get(x2, y2)[0] > 10 ) {
+                    if(count >=4 ) {
                         for (int n = x1; n < x2; n++) {
                             for (int m = y1; m < y2; m++) {
                                 if (inMat.get(n, m)[0] < 10 && label.get(n, m)[0] == uncheck) {
@@ -748,7 +641,15 @@ public class ImageUtil {
         return dst;
     }
     
-    
+    /**
+     * 清除二值图像的细小连接
+     * @param inMat
+     * @param rowLimit
+     * @param colsLimit
+     * @param debug
+     * @param tempPath
+     * @return
+     */
     public static Mat clearSmallConnArea(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
         int uncheck = 0, black = 1, white = 2;
         
@@ -783,8 +684,8 @@ public class ImageUtil {
                         count++;
                     }
                     
-                    // 根据中心点+limit，定位四个角生成一个矩形，
-                    // 将四个角都是白色的矩形，内部的黑点标记为 要被替换的对象
+                    // 根据 中心点+limit，定位四个角生成一个矩形，
+                    // 将四个角都是黑色的矩形，内部的白点标记为 要被替换的对象
                     if(count >= 4) {
                         for (int n = x1; n < x2; n++) {
                             for (int m = y1; m < y2; m++) {
@@ -811,10 +712,6 @@ public class ImageUtil {
         return dst;
     }
 
-    
-    
-    
-    
 
 
 
