@@ -52,7 +52,7 @@ public class SVMTrain {
 
     public static void main(String[] arg) {
         // 训练， 生成svm.xml库文件
-        train(); 
+        // train(); 
 
         // 识别，判断样本文件是否是车牌
         pridect(); 

@@ -1,8 +1,11 @@
 package com.yuxue.util;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
 
@@ -41,33 +44,38 @@ public class ImageUtil {
     private static Map<String, Integer> debugMap = Maps.newLinkedHashMap();
     static {
         debugMap.put("yuantu", 0); // 原图
-        debugMap.put("gaussianBlur", 1); // 高斯模糊
-        debugMap.put("gray", 2);  // 图像灰度化
-        debugMap.put("sobel", 3); // Sobel 运算，得到图像的一阶水平方向导数
-        debugMap.put("threshold", 4); //图像二值化
-        debugMap.put("morphology", 5); // 图像闭操作
-        debugMap.put("clearSmallConnArea", 6); // 降噪
-        debugMap.put("clearAngleConn", 7); // 降噪
-        debugMap.put("clearHole", 8); // 降噪
-        
-        
-        debugMap.put("contours", 9); // 提取外部轮廓
-        debugMap.put("screenblock", 10); // 外部轮廓筛选
-        debugMap.put("crop", 11); // 切图
-        debugMap.put("resize", 12); // 切图resize
+        debugMap.put("gaussianBlur", 0); // 高斯模糊
+        debugMap.put("gray", 0);  // 图像灰度化
+        debugMap.put("sobel", 0); // Sobel 运算，得到图像的一阶水平方向导数
+        debugMap.put("threshold", 0); //图像二值化
+        debugMap.put("morphology", 0); // 图像闭操作
+        debugMap.put("clearInnerHole", 0); // 降噪
+        debugMap.put("clearSmallConnArea", 0); // 降噪
+        debugMap.put("clearAngleConn", 0); // 降噪
+        debugMap.put("clearHole", 0); // 降噪
+        debugMap.put("contours", 0); // 提取外部轮廓
+        debugMap.put("screenblock", 0); // 外部轮廓筛选
+        debugMap.put("crop", 0); // 切图
+        debugMap.put("resize", 0); // 切图resize
+        debugMap.put("char_threshold", 0); 
+        debugMap.put("char_clearLiuDing", 0); // 去除柳钉
+        debugMap.put("specMat", 0); 
+        debugMap.put("chineseMat", 0);
+        debugMap.put("char_auxRoi", 0);
 
-        //  debugMap.put("char_threshold", 10); 
-        // debugMap.put("char_clearLiuDing", 11); // 去除柳钉
-        // debugMap.put("specMat", 12); 
-        // debugMap.put("chineseMat", 13);
-        // debugMap.put("char_auxRoi", 14);
+        // 设置index， 用于debug生成文件时候按名称排序
+        Integer index = 100;
+        for (Entry<String, Integer> entry : debugMap.entrySet()) {
+            entry.setValue(index);
+            index ++;
+        }
     }
 
     public static void main(String[] args) {
-
+        Instant start = Instant.now();
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        // filename = tempPath + "/100_yuantu4.jpg";
+        filename = tempPath + "/100_yuantu4.jpg";
         // filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
@@ -97,7 +105,9 @@ public class ImageUtil {
         // ImageUtil.rgb2Hsv(src, debug, tempPath);
         // ImageUtil.getHSVValue(src, debug, tempPath);
 
-        System.err.println("done!!!");
+        Instant end = Instant.now();
+        System.err.println("总耗时：" + Duration.between(start, end).toMillis());
+
     }
 
 
@@ -113,7 +123,7 @@ public class ImageUtil {
         Mat dst = new Mat();
         Imgproc.GaussianBlur(inMat, dst, new Size(DEFAULT_GAUSSIANBLUR_SIZE, DEFAULT_GAUSSIANBLUR_SIZE), 0, 0, Core.BORDER_DEFAULT);
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("gaussianBlur") + 100) + "_gaussianBlur.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("gaussianBlur") + "_gaussianBlur.jpg", dst);
         }
         return dst;
     }
@@ -130,7 +140,7 @@ public class ImageUtil {
         Mat dst = new Mat();
         Imgproc.cvtColor(inMat, dst, Imgproc.COLOR_BGR2GRAY);
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("gray") + 100) + "_gray.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("gray") + "_gray.jpg", dst);
         }
         inMat.release();
         return dst;
@@ -170,7 +180,7 @@ public class ImageUtil {
         abs_grad_y.release();
 
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("sobel") + 100) + "_sobel.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("sobel") + "_sobel.jpg", dst);
         }
         return dst;
     }
@@ -207,7 +217,7 @@ public class ImageUtil {
         abs_grad_x.release();
         abs_grad_y.release();
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("sobel") + 100) + "_sobel.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("sobel") + "_sobel.jpg", dst);
         }
         return dst;
     }
@@ -225,7 +235,7 @@ public class ImageUtil {
         Mat dst = new Mat();
         Imgproc.threshold(inMat, dst, 100, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("threshold") + 100) + "_threshold.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("threshold") + "_threshold.jpg", dst);
         }
         inMat.release();
         return dst;
@@ -249,23 +259,22 @@ public class ImageUtil {
         Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, size);
         Imgproc.morphologyEx(inMat, dst, Imgproc.MORPH_CLOSE, element);
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("morphology") + "_morphology0.jpg", dst);
         }
+
+        // 填补内部孔洞，为了去除小连通区域的时候，降低影响
+        Mat a = clearInnerHole(dst, 8, 16, debug, tempPath);
 
         // 去除小连通区域
-        Mat a = clearSmallConnArea(dst, 3, 10, debug, tempPath);
-        Mat b = clearSmallConnArea(a, 10, 3, debug, tempPath);
-        // 按斜边去除
-        // Mat e = clearSmallConnArea(b, 2, debug, tempPath);
-        
-        // 去除孔洞
-        Mat c = clearHole(b, 3, 10, debug, tempPath);
-        Mat d = clearHole(c, 10, 3, debug, tempPath);
+        Mat b = clearSmallConnArea(a, 1, 10, debug, tempPath);
 
-        if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology2.jpg", d);
-        }
-        return d;
+        // 按斜边去除
+        // Mat e = clearAngleConn(b, 5, debug, tempPath);
+
+        // 填补边缘孔洞
+        // Mat d = clearHole(a, 4, 2, debug, tempPath);
+
+        return b;
     }
 
 
@@ -294,7 +303,7 @@ public class ImageUtil {
             // 将轮廓描绘到原图
             Imgproc.drawContours(result, contours, -1, new Scalar(0, 0, 255, 255));
             // 输出带轮廓的原图
-            Imgcodecs.imwrite(tempPath + (debugMap.get("contours") + 100) + "_contours.jpg", result);
+            Imgcodecs.imwrite(tempPath + debugMap.get("contours") + "_contours.jpg", result);
         }
         return contours;
     }
@@ -343,13 +352,13 @@ public class ImageUtil {
                 Mat img_crop = new Mat();
                 Imgproc.getRectSubPix(src, rect_size, mr.center, img_crop);
                 if (debug) {
-                    Imgcodecs.imwrite(tempPath + (debugMap.get("crop") + 100) + "_crop_" + j + ".png", img_crop);
+                    Imgcodecs.imwrite(tempPath + debugMap.get("crop") + "_crop_" + j + ".png", img_crop);
                 }
                 // 处理切图，调整为指定大小
                 Mat resized = new Mat(HEIGHT, WIDTH, TYPE);
                 Imgproc.resize(img_crop, resized, resized.size(), 0, 0, Imgproc.INTER_CUBIC);
                 if (debug) {
-                    Imgcodecs.imwrite(tempPath + (debugMap.get("resize") + 100) + "_resize_" + j + ".png", resized);
+                    Imgcodecs.imwrite(tempPath + debugMap.get("resize") + "_resize_" + j + ".png", resized);
                     j++;
                 }
                 dst.add(resized);
@@ -361,7 +370,7 @@ public class ImageUtil {
             // 将轮廓描绘到原图
             Imgproc.drawContours(result, mv, -1, new Scalar(0, 0, 255, 255));
             // 输出带轮廓的原图
-            Imgcodecs.imwrite(tempPath + (debugMap.get("screenblock") + 100) + "_screenblock.jpg", result);
+            Imgcodecs.imwrite(tempPath + debugMap.get("screenblock") + "_screenblock.jpg", result);
         }
         return  dst;
     }
@@ -548,17 +557,21 @@ public class ImageUtil {
         }
     }
 
+
     /**
-     * 清除二值图像的黑洞
-     * 按矩形清理
-     * @param inMat  二值图像  0代表黑色，255代表白色
-     * @param rowLimit 像素值
-     * @param colsLimit 像素值
-     * @param debug 
+     * 清除白色区域的内部黑色孔洞
+     * rowLimit != colsLimit, 使用长方形比正方形好
+     * 该算法比较耗时
+     * @param inMat
+     * @param rowLimit
+     * @param colsLimit
+     * @param debug
      * @param tempPath
+     * @return
      */
-    public static Mat clearHole(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
-        int uncheck = 0, black = 1, white = 2;
+    public static Mat clearInnerHole(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
+        Instant start = Instant.now();
+        int uncheck = 0, normal = 2, replace = 3, white = 255, black = 0;
 
         Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
         inMat.copyTo(dst);
@@ -569,53 +582,149 @@ public class ImageUtil {
         // 标记所有的白色区域
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
-                if (inMat.get(i, j)[0] > 10) {   // 对于二值图，0代表黑色，255代表白色
-                    label.put(i, j, white); // 中心点
+                // 白色点较少，遍历白色点速度快
+                if (inMat.get(i, j)[0] == white && label.get(i, j)[0] == uncheck) {   // 对于二值图，0代表黑色，255代表白色
+                    label.put(i, j, normal); // 中心点
 
-                    int x1 = i - rowLimit < 0 ? 0 : i - rowLimit;
-                    int x2 = i + rowLimit >= inMat.rows() ? inMat.rows()-1 : i + rowLimit;
-                    int y1 = j - colsLimit < 0 ? 0 : j - colsLimit ;
-                    int y2 = j + colsLimit >= inMat.cols() ? inMat.cols()-1 : j + colsLimit ;
+                    // 执行两次，交换row 跟col；
+                    int condition = 0;
+                    do {
+                        int x1 = i;
+                        int x2 = i + rowLimit >= inMat.rows() ? inMat.rows() - 1 : i + rowLimit;
+                        int y1 = j;
+                        int y2 = j + colsLimit >= inMat.cols() ? inMat.cols() - 1 : j + colsLimit ;
 
-                    int count = 0;
-                    if(inMat.get(x1, y1)[0] > 10) {// 左上角
-                        count++;
-                    }
-                    if(inMat.get(x1, y2)[0] > 10) { // 左下角
-                        count++;
-                    }
-                    if(inMat.get(x2, y1)[0] > 10) { // 右上角
-                        count++;
-                    }
-                    if(inMat.get(x2, y2)[0] > 10) { // 右下角
-                        count++;
-                    }
+                        int count = 0;
+                        // 遍历四条边
+                        for (int k = x1; k < x2; k++) {
+                            if(inMat.get(k, y1)[0] == black || inMat.get(k, y2)[0] == black) {
+                                count++;
+                            }
+                        }
+                        for (int k = y1; k < y2; k++) {
+                            if(inMat.get(x1, k)[0] == black || inMat.get(x2, k)[0] == black) {
+                                count++;
+                            }
+                        }
 
-                    // 根据中心点+limit，定位四个角生成一个矩形，
-                    // 将四个角都是白色的矩形，内部的黑点标记为 要被替换的对象
-                    if(count >=4 ) {
-                        for (int n = x1; n < x2; n++) {
-                            for (int m = y1; m < y2; m++) {
-                                if (inMat.get(n, m)[0] < 10 && label.get(n, m)[0] == uncheck) {
-                                    label.put(n, m, black);
+                        // 根据中心点+limit，定位四个角生成一个矩形，
+                        // 矩形四条边都是白色，内部的黑点标记为 要被替换的对象
+                        if(count == 0 ) {
+                            for (int n = x1; n < x2; n++) {
+                                for (int m = y1; m < y2; m++) {
+                                    if (inMat.get(n, m)[0] == black && label.get(n, m)[0] == uncheck) {
+                                        label.put(n, m, replace);
+                                    }
                                 }
                             }
                         }
-                    }
+                        int ex = rowLimit;
+                        rowLimit = colsLimit;
+                        colsLimit = ex;
+
+                        condition++;
+                    } while (condition == 1);
                 }
             }
         }
 
-        // 黑色替换成白色
+
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
-                if(label.get(i, j)[0] == black) {
-                    dst.put(i, j, 255);
+                if(label.get(i, j)[0] == replace) {
+                    dst.put(i, j, white);
+                }
+            }
+        }
+        label.release();
+        if (debug) {
+            Imgcodecs.imwrite(tempPath + debugMap.get("clearInnerHole") + "_clearInnerHole.jpg", dst);
+            Instant end = Instant.now();
+            System.out.println("clearInnerHole执行耗时：" + Duration.between(start, end).toMillis());
+        }
+        return dst;
+    }
+
+
+    /**
+     * 清除二值图像的黑洞
+     * 按矩形清理
+     * @param inMat  二值图像  0代表黑色，255代表白色
+     * @param rowLimit 像素值
+     * @param colsLimit 像素值
+     * @param debug 
+     * @param tempPath
+     */
+    public static Mat clearHole(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
+        Instant start = Instant.now();
+        int uncheck = 0, normal = 2, replace = 3, white = 255, black = 0;
+        Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
+        inMat.copyTo(dst);
+
+        // 初始化的图像全部为0，未检查; 全黑图像
+        Mat label = new Mat(inMat.size(), CvType.CV_8UC1);
+
+        // 标记所有的白色区域
+        for (int i = 0; i < inMat.rows(); i++) {
+            for (int j = 0; j < inMat.cols(); j++) {
+                if (inMat.get(i, j)[0] == white) {   // 对于二值图，0代表黑色，255代表白色
+                    label.put(i, j, normal); // 中心点
+
+                    // 执行两次，交换row 跟col；
+                    int condition = 0;
+                    do {
+                        int x1 = i;
+                        int x2 = i + rowLimit >= inMat.rows() ? inMat.rows() - 1 : i + rowLimit;
+                        int y1 = j;
+                        int y2 = j + colsLimit >= inMat.cols() ? inMat.cols() - 1 : j + colsLimit ;
+
+                        int count = 0;
+                        if(inMat.get(x1, y1)[0] == white) {// 左上角
+                            count++;
+                        }
+                        if(inMat.get(x1, y2)[0] == white) { // 左下角
+                            count++;
+                        }
+                        if(inMat.get(x2, y1)[0] == white) { // 右上角
+                            count++;
+                        }
+                        if(inMat.get(x2, y2)[0] == white) { // 右下角
+                            count++;
+                        }
+
+                        // 根据中心点+limit，定位四个角生成一个矩形，
+                        // 将四个角都是白色的矩形，内部的黑点标记为 要被替换的对象
+                        if(count >=4 ) {
+                            for (int n = x1; n < x2; n++) {
+                                for (int m = y1; m < y2; m++) {
+                                    if (inMat.get(n, m)[0] == black && label.get(n, m)[0] == uncheck) {
+                                        label.put(n, m, replace);
+                                    }
+                                }
+                            }
+                        }
+
+                        int ex = rowLimit;
+                        rowLimit = colsLimit;
+                        colsLimit = ex;
+
+                        condition++;
+                    } while (condition == 1);
+                }
+            }
+        }
+
+        for (int i = 0; i < inMat.rows(); i++) {
+            for (int j = 0; j < inMat.cols(); j++) {
+                if(label.get(i, j)[0] == replace) {
+                    dst.put(i, j, white); // 黑色替换成白色
                 }
             }
         }
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("clearHole") + 100) + "_clearHole.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("clearHole") + "_clearHole.jpg", dst);
+            Instant end = Instant.now();
+            System.out.println("clearHole执行耗时：" + Duration.between(start, end).toMillis());
         }
         return dst;
     }
@@ -631,7 +740,8 @@ public class ImageUtil {
      * @return
      */
     public static Mat clearSmallConnArea(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
-        int uncheck = 0, black = 1, white = 2;
+        Instant start = Instant.now();
+        int uncheck = 0, normal = 2, replace = 3, white = 255, black = 0;
 
         Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
         inMat.copyTo(dst);
@@ -642,57 +752,67 @@ public class ImageUtil {
         // 标记所有的白色区域
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
-                if (inMat.get(i, j)[0] < 10) {   // 对于二值图，0代表黑色，255代表白色
-                    label.put(i, j, black); // 中心点
+                if (inMat.get(i, j)[0] == black) {   // 对于二值图，0代表黑色，255代表白色
+                    label.put(i, j, normal); // 中心点
+                    // 执行两次，交换row 跟col；
+                    int condition = 0;
+                    do {
+                        int x1 = i;
+                        int x2 = i + rowLimit >= inMat.rows() ? inMat.rows() - 1 : i + rowLimit;
+                        int y1 = j;
+                        int y2 = j + colsLimit >= inMat.cols() ? inMat.cols() - 1 : j + colsLimit ;
 
-                    int x1 = i - rowLimit < 0 ? 0 : i - rowLimit;
-                    int x2 = i + rowLimit >= inMat.rows() ? inMat.rows()-1 : i + rowLimit;
-                    int y1 = j - colsLimit < 0 ? 0 : j - colsLimit ;
-                    int y2 = j + colsLimit >= inMat.cols() ? inMat.cols()-1 : j + colsLimit ;
+                        int count = 0;
+                        if(inMat.get(x1, y1)[0] == black) {// 左上角
+                            count++;
+                        }
+                        if(inMat.get(x1, y2)[0] == black) { // 左下角
+                            count++;
+                        }
+                        if(inMat.get(x2, y1)[0] == black) { // 右上角
+                            count++;
+                        }
+                        if(inMat.get(x2, y2)[0] == black) { // 右下角
+                            count++;
+                        }
 
-                    int count = 0;
-                    if(inMat.get(x1, y1)[0] < 10) {// 左上角
-                        count++;
-                    }
-                    if(inMat.get(x1, y2)[0] < 10) { // 左下角
-                        count++;
-                    }
-                    if(inMat.get(x2, y1)[0] < 10) { // 右上角
-                        count++;
-                    }
-                    if(inMat.get(x2, y2)[0] < 10) { // 右下角
-                        count++;
-                    }
-
-                    // 根据 中心点+limit，定位四个角生成一个矩形，
-                    // 将四个角都是黑色的矩形，内部的白点标记为 要被替换的对象
-                    if(count >= 4) {
-                        for (int n = x1; n < x2; n++) {
-                            for (int m = y1; m < y2; m++) {
-                                if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
-                                    label.put(n, m, white);
+                        // 根据 中心点+limit，定位四个角生成一个矩形，
+                        // 将四个角都是黑色的矩形，内部的白点标记为 要被替换的对象
+                        if(count >= 4) {
+                            for (int n = x1; n < x2; n++) {
+                                for (int m = y1; m < y2; m++) {
+                                    if (inMat.get(n, m)[0] == white && label.get(n, m)[0] == uncheck) {
+                                        label.put(n, m, replace);
+                                    }
                                 }
                             }
                         }
-                    }
+                        int ex = rowLimit;
+                        rowLimit = colsLimit;
+                        colsLimit = ex;
+
+                        condition++;
+                    } while (condition == 1);
                 }
             }
         }
-        // 白色替换成黑色
+
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
-                if(label.get(i, j)[0] == white) {
-                    dst.put(i, j, 0);
+                if(label.get(i, j)[0] == replace) {
+                    dst.put(i, j, black);   // 白色替换成黑色
                 }
             }
         }
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("clearSmallConnArea") + 100) + "_clearSmallConnArea.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("clearSmallConnArea") + "_clearSmallConnArea.jpg", dst);
+            Instant end = Instant.now();
+            System.out.println("clearSmallConnArea执行耗时：" + Duration.between(start, end).toMillis());
         }
         return dst;
     }
 
-    
+
     /**
      * 清除二值图像的细小连接
      * 按45度斜边清除
@@ -703,8 +823,9 @@ public class ImageUtil {
      * @param tempPath
      * @return
      */
-    public static Mat clearSmallConnArea(Mat inMat, int limit, Boolean debug, String tempPath) {
-        int uncheck = 0, black = 1, white = 2;
+    public static Mat clearAngleConn(Mat inMat, int limit, Boolean debug, String tempPath) {
+        Instant start = Instant.now();
+        int uncheck = 0, normal = 2, replace = 3, white = 255, black = 0;
 
         Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
         inMat.copyTo(dst);
@@ -715,58 +836,48 @@ public class ImageUtil {
         // 标记所有的白色区域
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
-                if (inMat.get(i, j)[0] < 10) {   // 对于二值图，0代表黑色，255代表白色
-                    label.put(i, j, black); // 中心点
+                if (inMat.get(i, j)[0] == black) {   // 对于二值图，0代表黑色，255代表白色
+                    label.put(i, j, normal); // 中心点
 
-                    int x1 = i - limit < 0 ? 0 : i - limit;
-                    int x2 = i + limit >= inMat.rows() ? inMat.rows()-1 : i + limit;
-                    int y1 = j - limit < 0 ? 0 : j - limit ;
-                    int y2 = j + limit >= inMat.cols() ? inMat.cols()-1 : j + limit ;
+                    int x1 = i;
+                    int x2 = i + limit >= inMat.rows() ? inMat.rows() - 1 : i + limit;
+                    int y1 = j;
+                    int y2 = j + limit >= inMat.cols() ? inMat.cols() - 1 : j + limit ;
 
-                    int count = 0;
-                    if(inMat.get(x1, y1)[0] < 10) {// 左上角
-                        count++;
-                    }
-                    if(inMat.get(x1, y2)[0] < 10) { // 左下角
-                        count++;
-                    }
-                    if(inMat.get(x2, y1)[0] < 10) { // 右上角
-                        count++;
-                    }
-                    if(inMat.get(x2, y2)[0] < 10) { // 右下角
-                        count++;
-                    }
-                    
                     // 根据 中心点+limit，定位四个角生成一个矩形，
                     // 将2个角都是黑色的线，内部的白点标记为 要被替换的对象
-                    if(count == 2) {
-                        // 【\】 斜对角线
-                        for (int n = x1, m = y1; n < x2; n++, m++) {
-                            if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
-                                label.put(n, m, white);
+                    // 【\】 斜对角线
+                    if(inMat.get(x1, y1)[0] == black && inMat.get(x2, y2)[0] == black) {
+                        for (int n = x1, m = y1; n < x2 && m < y2; n++, m++) {
+                            if (inMat.get(n, m)[0] == white && label.get(n, m)[0] == uncheck) {
+                                label.put(n, m, replace);
                             }
                         }
+                    }
+                    if(inMat.get(x1, y2)[0] == black && inMat.get(x2, y1)[0] == black) {
                         // 【/】 斜对角线
-                        for (int n = x1, m = y2; n < x2; n++, m--) {
-                            if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
-                                label.put(n, m, white);
+                        for (int n = x1, m = y2; n < x2 && m > y1; n++, m--) {
+                            if (inMat.get(n, m)[0] == white && label.get(n, m)[0] == uncheck) {
+                                label.put(n, m, replace);
                             }
                         }
                     }
                 }
             }
         }
-     // 白色替换成黑色
+        // 白色替换成黑色
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
-                if(label.get(i, j)[0] == white) {
-                    dst.put(i, j, 0);
+                if(label.get(i, j)[0] == replace) {
+                    dst.put(i, j, black);
                 }
             }
         }
-        
+
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("clearAngleConn") + 100) + "_clearAngleConn.jpg", dst);
+            Imgcodecs.imwrite(tempPath + debugMap.get("clearAngleConn") + "_clearAngleConn.jpg", dst);
+            Instant end = Instant.now();
+            System.out.println("clearAngleConn执行耗时：" + Duration.between(start, end).toMillis());
         }
         return dst;
     }
