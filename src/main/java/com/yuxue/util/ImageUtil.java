@@ -21,6 +21,7 @@ import org.opencv.imgproc.Imgproc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.yuxue.constant.Constant;
 
 
 /**
@@ -40,14 +41,14 @@ public class ImageUtil {
     // 车牌定位处理步骤，该map用于表示步骤图片的顺序
     private static Map<String, Integer> debugMap = Maps.newLinkedHashMap();
     static {
-        debugMap.put("yuantu", 0); // 高斯模糊
+        debugMap.put("yuantu", 0); // 原图
         debugMap.put("gaussianBlur", 1); // 高斯模糊
         debugMap.put("gray", 2);  // 图像灰度化
-        debugMap.put("sobel", 3); // Sobel 算子
+        debugMap.put("sobel", 3); // Sobel 运算，得到图像的一阶水平方向导数
         debugMap.put("threshold", 4); //图像二值化
         debugMap.put("morphology", 5); // 图像闭操作
         debugMap.put("contours", 6); // 提取外部轮廓
-        debugMap.put("screenblock", 7); // 提取外部轮廓
+        debugMap.put("screenblock", 7); // 外部轮廓筛选
         debugMap.put("result", 8); // 原图处理结果
         debugMap.put("crop", 9); // 切图
         debugMap.put("resize", 10); // 切图resize
@@ -68,7 +69,7 @@ public class ImageUtil {
 
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        filename = tempPath + "/100_yuantu2.jpg";
+        filename = tempPath + "/100_yuantu1.jpg";
         //filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
@@ -89,6 +90,11 @@ public class ImageUtil {
         List<MatOfPoint> contours = ImageUtil.contours(src, morphology, debug, tempPath);
 
         Vector<Mat> rects = ImageUtil.screenBlock(src, contours, debug, tempPath);
+        
+        Vector<Mat> dst = new Vector<Mat>();
+        PalteUtil.hasPlate(rects, dst, "D:/PlateDetect/train/plate_detect_svm/svm2.xml", debug, tempPath);
+        
+        System.err.println("识别到的车牌数量：" + dst.size());
 
         // ImageUtil.rgb2Hsv(src, debug, tempPath);
         // ImageUtil.getHSVValue(src, debug, tempPath);
@@ -254,7 +260,7 @@ public class ImageUtil {
             Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
         }
         
-        // 去除小连通区域
+        /*// 去除小连通区域
         Mat a = clearSmallConnArea(dst, 3, 10, false, tempPath);
         Mat b = clearSmallConnArea(a, 10, 3, false, tempPath);
         // 去除孔洞
@@ -263,8 +269,8 @@ public class ImageUtil {
         
         if (debug) {
             Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", d);
-        }
-        return d;
+        }*/
+        return dst;
     }
 
 

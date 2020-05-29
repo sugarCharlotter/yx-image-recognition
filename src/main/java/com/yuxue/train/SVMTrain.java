@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 
 import org.opencv.core.Core;
+import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.TermCriteria;
@@ -13,7 +14,9 @@ import org.opencv.ml.Ml;
 import org.opencv.ml.SVM;
 import org.opencv.ml.TrainData;
 
+import com.google.common.collect.Lists;
 import com.yuxue.constant.Constant;
+import com.yuxue.enumtype.Direction;
 import com.yuxue.util.FileUtil;
 
 /**
@@ -42,7 +45,7 @@ public class SVMTrain {
     private static final String DEFAULT_PATH = "D:/PlateDetect/train/plate_detect_svm/";
 
     // 训练模型文件保存位置
-    private static final String MODEL_PATH = DEFAULT_PATH + "svm.xml";
+    private static final String MODEL_PATH = DEFAULT_PATH + "svm2.xml";
 
     static {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -87,17 +90,25 @@ public class SVMTrain {
             Mat inMat = Imgcodecs.imread(path);   // 读取样本文件
 
             // 创建一个行数为sample_num, 列数为 rows*cols 的矩阵; 用于存放样本
-            if (trainingDataMat == null) {
+            /*if (trainingDataMat == null) {
                 trainingDataMat = new Mat(sample_num, inMat.rows() * inMat.cols(), CvType.CV_32F);
+            }*/
+
+            // 样本文件处理，这里是为了过滤不需要的特征，减少训练时间 // 根据实际情况需要进行处理
+            /*Mat greyMat = new Mat();
+            Imgproc.cvtColor(inMat, greyMat, Imgproc.COLOR_BGR2GRAY); // 转成灰度图
+
+            Mat dst = new Mat();
+            Imgproc.threshold(greyMat, dst, 100, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
+
+            Mat dst = new Mat(inMat.rows(), inMat.cols(), inMat.type());
+            Imgproc.Canny(greyMat, dst, 130, 250);*/
+            
+            Mat dst = getFeature(inMat);
+            if (trainingDataMat == null) {
+                trainingDataMat = new Mat(sample_num, dst.rows() * dst.cols(), CvType.CV_32F);
             }
             
-            // 样本文件处理，这里是为了过滤不需要的特征，减少训练时间 // 根据实际情况需要进行处理
-            Mat greyMat = new Mat();
-            Imgproc.cvtColor(inMat, greyMat, Imgproc.COLOR_BGR2GRAY); // 转成灰度图
-            
-            Mat dst = new Mat(inMat.rows(), inMat.cols(), inMat.type());
-            Imgproc.Canny(greyMat, dst, 130, 250); // 边缘检测
-
             // 将样本矩阵转换成只有一行的矩阵，保存为float数组
             float[] arr = new float[dst.rows() * dst.cols()];
             int l = 0;
@@ -108,10 +119,11 @@ public class SVMTrain {
                     l++;
                 }
             }
-            
+
             trainingDataMat.put(i, 0, arr); // 多张图合并到一张
+           
         }
-        
+
         // Imgcodecs.imwrite(DEFAULT_PATH + "trainingDataMat.jpg", trainingDataMat);
 
         // 配置SVM训练器参数
@@ -146,27 +158,24 @@ public class SVMTrain {
         doPridect(svm, DEFAULT_PATH + "test/debug_resize_3.jpg");
         doPridect(svm, DEFAULT_PATH + "test/S22_KG2187_3.jpg");
         doPridect(svm, DEFAULT_PATH + "test/S22_KG2187_5.jpg");
-        doPridect(svm, DEFAULT_PATH + "test/result_0.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_1.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_2.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_3.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_4.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_5.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_6.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_7.png");
-        doPridect(svm, DEFAULT_PATH + "test/result_8.png");
 
     }
 
     public static void doPridect(SVM svm, String imgPath) {
-
+        
         Mat src = Imgcodecs.imread(imgPath);// 图片大小要和样本一致
-        Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
+        /*Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
+
+        Mat dst = new Mat();
+        Imgproc.threshold(src, dst, 100, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
+
         Mat dst = new Mat();
         Imgproc.Canny(src, dst, 130, 250);
 
         Mat samples = dst.reshape(1, 1);
-        samples.convertTo(samples, CvType.CV_32F);
+        samples.convertTo(samples, CvType.CV_32F);*/
+        
+        Mat dst = getFeature(src);
 
         // 等价于上面两行代码
         /*Mat samples = new Mat(1, dst.cols() * dst.rows(), CvType.CV_32F);
@@ -180,14 +189,14 @@ public class SVMTrain {
             }
         }
         samples.put(0, 0, arr);*/
-        
+
         // Imgcodecs.imwrite(DEFAULT_PATH + "test_1.jpg", samples);
 
         // 如果训练时使用这个标识，那么符合的图像会返回9.0
-        float flag = svm.predict(samples);
+        float flag = svm.predict(dst);
 
-        System.err.println(flag);
-        
+        // System.err.println(flag);
+
         if (flag == 0) {
             System.err.println(imgPath + "： 目标符合");
         }
@@ -208,5 +217,112 @@ public class SVMTrain {
         }
         return labels;
     }
+
+
+    public static Mat getFeature(Mat inMat) {
+        
+        Mat histogram = getHistogramFeatures(inMat);
+        Mat color = getColorFeatures(inMat);
+        
+        List<Mat> list = Lists.newArrayList();
+        list.add(histogram);
+        list.add(color);
+
+        Mat dst = new Mat();
+        // hconcat 水平拼接 // vconcat 垂直拼接
+        Core.hconcat(list, dst);
+        return dst;
+    }
+
+
+    public static Mat getHistogramFeatures(Mat src) {
+        Mat img_grey = new Mat();
+        Imgproc.cvtColor(src, img_grey, Imgproc.COLOR_BGR2GRAY);
+
+        Mat img_threshold = new Mat();
+        Imgproc.threshold(img_grey, img_threshold, 0, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
+
+        // Histogram features
+        float[] vhist = projectedHistogram(img_threshold, Direction.VERTICAL);
+        float[] hhist = projectedHistogram(img_threshold, Direction.HORIZONTAL);
+
+        // Last 10 is the number of moments components
+        int numCols = vhist.length + hhist.length;
+
+        Mat features = Mat.zeros(1, numCols, CvType.CV_32F);
+        int j = 0;
+        for (int i = 0; i < vhist.length; i++) {
+            features.put(0, j, vhist[i]);
+            j++;
+        }
+        for (int i = 0; i < hhist.length; i++) {
+            features.put(0, j, hhist[i]);
+            j++;
+        }
+        return features;
+    }
+
+    public static float[] projectedHistogram(Mat inMat, Direction direction){
+        Mat img = new Mat();
+        inMat.copyTo(img);
+        int sz = img.rows();
+        if(Direction.VERTICAL.equals(direction)) {
+            sz = img.cols();
+        }
+        // 统计这一行或一列中，非零元素的个数，并保存到nonZeroMat中
+        float[] nonZeroMat = new float[sz];
+        Core.extractChannel(img, img, 0);   // 提取0通道
+        for (int j = 0; j < sz; j++) {
+            Mat data = Direction.HORIZONTAL.equals(direction) ? img.row(j) : img.col(j);
+            int count = Core.countNonZero(data);
+            nonZeroMat[j] = count;
+        }
+        // Normalize histogram
+        float max = 1F;
+        for (int j = 0; j < nonZeroMat.length; j++) {
+            max = Math.max(max, nonZeroMat[j]);
+        }
+        for (int j = 0; j < nonZeroMat.length; j++) {
+            nonZeroMat[j] /= max;
+        }
+        return nonZeroMat;
+    }
+    
+
+    public static Mat getColorFeatures(Mat src) {
+        Mat src_hsv = new Mat();
+        Imgproc.cvtColor(src, src_hsv, Imgproc.COLOR_BGR2GRAY);
+
+        int sz = 180;
+        int[] h = new int[180];
+
+        for (int i = 0; i < src_hsv.rows(); i++) {
+            for (int j = 0; j < src_hsv.cols(); j++) {
+                int H = (int) src_hsv.get(i, j)[0];// 0-180
+                if (H > sz - 1) {
+                    H = sz - 1;
+                }
+                if (H < 0) {
+                    H = 0;
+                } 
+                h[H]++;
+            }
+        }
+        // 创建黑色的图
+        Mat features = Mat.zeros(1, sz, CvType.CV_32F);
+        
+        for (int j = 0; j < sz; j++) {
+            features.put(0, j, (float)h[j]);
+        }
+
+        MinMaxLocResult m = Core.minMaxLoc(features);
+        double max = m.maxVal;
+
+        if (max > 0) {
+            features.convertTo(features, -1, 1.0f / max, 0);
+        }
+        return features;
+    }
+
 
 }
