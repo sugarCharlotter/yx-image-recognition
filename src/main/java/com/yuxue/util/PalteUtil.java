@@ -91,9 +91,11 @@ public class PalteUtil {
                 float flag = svm.predict(samples);
                 
                 if (flag == 0) {
-                    System.err.println("目标符合");
                     dst.add(src);
-                    Imgcodecs.imwrite(tempPath + "199_plate_reco_" + i + ".png", src);
+                    if(debug) {
+                        System.err.println("目标符合");
+                        Imgcodecs.imwrite(tempPath + "199_plate_reco_" + i + ".png", src);
+                    }
                     i++;
                 } else {
                     System.out.println("目标不符合");

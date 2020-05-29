@@ -32,11 +32,11 @@ import com.google.common.collect.Maps;
 public class ImageUtil {
 
     private static String DEFAULT_BASE_TEST_PATH = "D:/PlateDetect/temp/";
-    
+
     static {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
     }
-    
+
     // 车牌定位处理步骤，该map用于表示步骤图片的顺序
     private static Map<String, Integer> debugMap = Maps.newLinkedHashMap();
     static {
@@ -46,17 +46,21 @@ public class ImageUtil {
         debugMap.put("sobel", 3); // Sobel 运算，得到图像的一阶水平方向导数
         debugMap.put("threshold", 4); //图像二值化
         debugMap.put("morphology", 5); // 图像闭操作
-        debugMap.put("contours", 6); // 提取外部轮廓
-        debugMap.put("screenblock", 7); // 外部轮廓筛选
-        debugMap.put("result", 8); // 原图处理结果
-        debugMap.put("crop", 9); // 切图
-        debugMap.put("resize", 10); // 切图resize
-        debugMap.put("char_threshold", 11); // 
+        debugMap.put("clearSmallConnArea", 6); // 降噪
+        debugMap.put("clearAngleConn", 7); // 降噪
+        debugMap.put("clearHole", 8); // 降噪
+        
+        
+        debugMap.put("contours", 9); // 提取外部轮廓
+        debugMap.put("screenblock", 10); // 外部轮廓筛选
+        debugMap.put("crop", 11); // 切图
+        debugMap.put("resize", 12); // 切图resize
 
-        // debugMap.put("char_clearLiuDing", 10); // 去除柳钉
-        // debugMap.put("specMat", 11); 
-        // debugMap.put("chineseMat", 12);
-        // debugMap.put("char_auxRoi", 13);
+        //  debugMap.put("char_threshold", 10); 
+        // debugMap.put("char_clearLiuDing", 11); // 去除柳钉
+        // debugMap.put("specMat", 12); 
+        // debugMap.put("chineseMat", 13);
+        // debugMap.put("char_auxRoi", 14);
     }
 
     public static void main(String[] args) {
@@ -64,7 +68,7 @@ public class ImageUtil {
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
         // filename = tempPath + "/100_yuantu4.jpg";
-        filename = tempPath + "/109_crop_0.png";
+        // filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
 
@@ -84,10 +88,10 @@ public class ImageUtil {
         List<MatOfPoint> contours = ImageUtil.contours(src, morphology, debug, tempPath);
 
         Vector<Mat> rects = ImageUtil.screenBlock(src, contours, debug, tempPath);
-        
+
         Vector<Mat> dst = new Vector<Mat>();
         PalteUtil.hasPlate(rects, dst, "D:/PlateDetect/train/plate_detect_svm/svm2.xml", debug, tempPath);
-        
+
         System.err.println("识别到的车牌数量：" + dst.size());
 
         // ImageUtil.rgb2Hsv(src, debug, tempPath);
@@ -247,16 +251,19 @@ public class ImageUtil {
         if (debug) {
             Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
         }
-        
+
         // 去除小连通区域
-        Mat a = clearSmallConnArea(dst, 3, 10, false, tempPath);
-        Mat b = clearSmallConnArea(a, 10, 3, false, tempPath);
-        // 去除孔洞
-        Mat c = clearHole(b, 3, 10, false, tempPath);
-        Mat d = clearHole(c, 10, 3, false, tempPath);
+        Mat a = clearSmallConnArea(dst, 3, 10, debug, tempPath);
+        Mat b = clearSmallConnArea(a, 10, 3, debug, tempPath);
+        // 按斜边去除
+        // Mat e = clearSmallConnArea(b, 2, debug, tempPath);
         
+        // 去除孔洞
+        Mat c = clearHole(b, 3, 10, debug, tempPath);
+        Mat d = clearHole(c, 10, 3, debug, tempPath);
+
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", d);
+            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology2.jpg", d);
         }
         return d;
     }
@@ -376,7 +383,7 @@ public class ImageUtil {
     public static final int DEFAULT_VERIFY_MIN = 1;
     public static final int DEFAULT_VERIFY_MAX = 30;*/
     private static boolean checkPlateSize(RotatedRect mr) {
-        
+
         // 切图面积取值范围
         int min = 44 * 14 * DEFAULT_VERIFY_MIN;
         int max = 44 * 14 * DEFAULT_VERIFY_MAX;
@@ -395,7 +402,7 @@ public class ImageUtil {
         return min <= area && area <= max && rmin <= r && r <= rmax;
     }
 
-    
+
     /**
      * rgb图像转换为hsv图像
      * @param inMat
@@ -555,7 +562,7 @@ public class ImageUtil {
 
         Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
         inMat.copyTo(dst);
-        
+
         // 初始化的图像全部为0，未检查; 全黑图像
         Mat label = new Mat(inMat.size(), CvType.CV_8UC1);
 
@@ -564,12 +571,12 @@ public class ImageUtil {
             for (int j = 0; j < inMat.cols(); j++) {
                 if (inMat.get(i, j)[0] > 10) {   // 对于二值图，0代表黑色，255代表白色
                     label.put(i, j, white); // 中心点
-                    
+
                     int x1 = i - rowLimit < 0 ? 0 : i - rowLimit;
                     int x2 = i + rowLimit >= inMat.rows() ? inMat.rows()-1 : i + rowLimit;
                     int y1 = j - colsLimit < 0 ? 0 : j - colsLimit ;
                     int y2 = j + colsLimit >= inMat.cols() ? inMat.cols()-1 : j + colsLimit ;
-                    
+
                     int count = 0;
                     if(inMat.get(x1, y1)[0] > 10) {// 左上角
                         count++;
@@ -583,7 +590,7 @@ public class ImageUtil {
                     if(inMat.get(x2, y2)[0] > 10) { // 右下角
                         count++;
                     }
-                    
+
                     // 根据中心点+limit，定位四个角生成一个矩形，
                     // 将四个角都是白色的矩形，内部的黑点标记为 要被替换的对象
                     if(count >=4 ) {
@@ -598,7 +605,7 @@ public class ImageUtil {
                 }
             }
         }
-        
+
         // 黑色替换成白色
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
@@ -608,13 +615,14 @@ public class ImageUtil {
             }
         }
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology2.jpg", dst);
+            Imgcodecs.imwrite(tempPath + (debugMap.get("clearHole") + 100) + "_clearHole.jpg", dst);
         }
         return dst;
     }
-    
+
     /**
      * 清除二值图像的细小连接
+     * 按水平或者垂直方向清除
      * @param inMat
      * @param rowLimit
      * @param colsLimit
@@ -624,24 +632,97 @@ public class ImageUtil {
      */
     public static Mat clearSmallConnArea(Mat inMat, int rowLimit, int colsLimit, Boolean debug, String tempPath) {
         int uncheck = 0, black = 1, white = 2;
-        
+
         Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
         inMat.copyTo(dst);
-        
+
         // 初始化的图像全部为0，未检查; 全黑图像
         Mat label = new Mat(inMat.size(), CvType.CV_8UC1);
-        
+
         // 标记所有的白色区域
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
                 if (inMat.get(i, j)[0] < 10) {   // 对于二值图，0代表黑色，255代表白色
                     label.put(i, j, black); // 中心点
-                    
+
                     int x1 = i - rowLimit < 0 ? 0 : i - rowLimit;
                     int x2 = i + rowLimit >= inMat.rows() ? inMat.rows()-1 : i + rowLimit;
                     int y1 = j - colsLimit < 0 ? 0 : j - colsLimit ;
                     int y2 = j + colsLimit >= inMat.cols() ? inMat.cols()-1 : j + colsLimit ;
-                    
+
+                    int count = 0;
+                    if(inMat.get(x1, y1)[0] < 10) {// 左上角
+                        count++;
+                    }
+                    if(inMat.get(x1, y2)[0] < 10) { // 左下角
+                        count++;
+                    }
+                    if(inMat.get(x2, y1)[0] < 10) { // 右上角
+                        count++;
+                    }
+                    if(inMat.get(x2, y2)[0] < 10) { // 右下角
+                        count++;
+                    }
+
+                    // 根据 中心点+limit，定位四个角生成一个矩形，
+                    // 将四个角都是黑色的矩形，内部的白点标记为 要被替换的对象
+                    if(count >= 4) {
+                        for (int n = x1; n < x2; n++) {
+                            for (int m = y1; m < y2; m++) {
+                                if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
+                                    label.put(n, m, white);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // 白色替换成黑色
+        for (int i = 0; i < inMat.rows(); i++) {
+            for (int j = 0; j < inMat.cols(); j++) {
+                if(label.get(i, j)[0] == white) {
+                    dst.put(i, j, 0);
+                }
+            }
+        }
+        if (debug) {
+            Imgcodecs.imwrite(tempPath + (debugMap.get("clearSmallConnArea") + 100) + "_clearSmallConnArea.jpg", dst);
+        }
+        return dst;
+    }
+
+    
+    /**
+     * 清除二值图像的细小连接
+     * 按45度斜边清除
+     * @param inMat
+     * @param limit
+     * @param angle
+     * @param debug
+     * @param tempPath
+     * @return
+     */
+    public static Mat clearSmallConnArea(Mat inMat, int limit, Boolean debug, String tempPath) {
+        int uncheck = 0, black = 1, white = 2;
+
+        Mat dst = new Mat(inMat.size(), CvType.CV_8UC1);
+        inMat.copyTo(dst);
+
+        // 初始化的图像全部为0，未检查; 全黑图像
+        Mat label = new Mat(inMat.size(), CvType.CV_8UC1);
+
+        // 标记所有的白色区域
+        for (int i = 0; i < inMat.rows(); i++) {
+            for (int j = 0; j < inMat.cols(); j++) {
+                if (inMat.get(i, j)[0] < 10) {   // 对于二值图，0代表黑色，255代表白色
+                    label.put(i, j, black); // 中心点
+
+                    int x1 = i - limit < 0 ? 0 : i - limit;
+                    int x2 = i + limit >= inMat.rows() ? inMat.rows()-1 : i + limit;
+                    int y1 = j - limit < 0 ? 0 : j - limit ;
+                    int y2 = j + limit >= inMat.cols() ? inMat.cols()-1 : j + limit ;
+
                     int count = 0;
                     if(inMat.get(x1, y1)[0] < 10) {// 左上角
                         count++;
@@ -657,20 +738,25 @@ public class ImageUtil {
                     }
                     
                     // 根据 中心点+limit，定位四个角生成一个矩形，
-                    // 将四个角都是黑色的矩形，内部的白点标记为 要被替换的对象
-                    if(count >= 4) {
-                        for (int n = x1; n < x2; n++) {
-                            for (int m = y1; m < y2; m++) {
-                                if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
-                                    label.put(n, m, white);
-                                }
+                    // 将2个角都是黑色的线，内部的白点标记为 要被替换的对象
+                    if(count == 2) {
+                        // 【\】 斜对角线
+                        for (int n = x1, m = y1; n < x2; n++, m++) {
+                            if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
+                                label.put(n, m, white);
+                            }
+                        }
+                        // 【/】 斜对角线
+                        for (int n = x1, m = y2; n < x2; n++, m--) {
+                            if (inMat.get(n, m)[0] > 10 && label.get(n, m)[0] == uncheck) {
+                                label.put(n, m, white);
                             }
                         }
                     }
                 }
             }
         }
-        // 黑色替换成白色
+     // 白色替换成黑色
         for (int i = 0; i < inMat.rows(); i++) {
             for (int j = 0; j < inMat.cols(); j++) {
                 if(label.get(i, j)[0] == white) {
@@ -678,12 +764,12 @@ public class ImageUtil {
                 }
             }
         }
+        
         if (debug) {
-            Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", dst);
+            Imgcodecs.imwrite(tempPath + (debugMap.get("clearAngleConn") + 100) + "_clearAngleConn.jpg", dst);
         }
         return dst;
     }
-
 
 
 
