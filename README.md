@@ -30,55 +30,62 @@
 - 数据库使用 sqlite3.0
 - 接口文档使用swagger 2.0
 
-#### 车牌识别流程
-- **操作界面**
+#### 操作界面
 ![1.png](./res/doc_image/1.png)
 
-- **图片处理过程**
+#### 车牌检测过程
 
-debug_GaussianBlur：
+高斯模糊：
 
 ![1.png](./res/doc_image/debug_GaussianBlur.jpg)
 
-debug_gray：
+图像灰度化：
 
 ![1.png](./res/doc_image/debug_gray.jpg)
 
-debug_Sobel：
+Sobel 算子：
 
 ![1.png](./res/doc_image/debug_Sobel.jpg)
 
-debug_threshold：
+图像二值化：
 
 ![1.png](./res/doc_image/debug_threshold.jpg)
 
-debug_morphology：
+图像闭操作：
 
 ![1.png](./res/doc_image/debug_morphology.jpg)
 
-debug_Contours：
+二值图像降噪：
+
+![1.png](./res/doc_image/debug_morphology.jpg)
+
+提取外部轮廓：
 
 ![1.png](./res/doc_image/debug_Contours.jpg)
 
-debug_crop：
+外部轮廓筛选：
+
+![1.png](./res/doc_image/107_screenblock.jpg)
+
+切图：
 
 ![1.png](./res/doc_image/debug_crop_1.jpg)
 ![1.png](./res/doc_image/debug_crop_2.jpg)
 ![1.png](./res/doc_image/debug_crop_3.jpg)
 ![1.png](./res/doc_image/debug_crop_4.jpg)
 
-debug_resize：
+重置切图尺寸：
 
 ![1.png](./res/doc_image/debug_resize_1.jpg)
 ![1.png](./res/doc_image/debug_resize_2.jpg)
 ![1.png](./res/doc_image/debug_resize_3.jpg)
 ![1.png](./res/doc_image/debug_resize_4.jpg)
 
-final_result:
+车牌检测结果:
 
 ![1.png](./res/doc_image/result_0.png)
 
-- **图片车牌文字识别过程**
+#### 图片车牌文字识别过程
 
 debug_char_threshold：
 
