@@ -57,7 +57,7 @@ Sobel 算子：
 
 二值图像降噪：
 
-![1.png](./res/doc_image/debug_morphology.jpg)
+![1.png](./res/doc_image/debug_morphology1.jpg)
 
 提取外部轮廓：
 
