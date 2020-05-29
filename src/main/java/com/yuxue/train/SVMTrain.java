@@ -22,7 +22,6 @@ import com.yuxue.util.FileUtil;
 /**
  * 基于org.opencv官方包实现的训练
  * 
- * 
  * windows下环境配置：
  * 1、官网下载对应版本的openvp：https://opencv.org/releases/page/2/  当前使用4.0.1版本
  * 2、双击exe文件安装，将 安装目录下\build\java\x64\opencv_java401.dll 拷贝到\build\x64\vc14\bin\目录下
@@ -59,7 +58,6 @@ public class SVMTrain {
         pridect(); 
     }
 
-
     public static void train() {
 
         // 正样本  // 136 × 36 像素  训练的源图像文件要相同大小
@@ -88,23 +86,9 @@ public class SVMTrain {
             }
 
             Mat inMat = Imgcodecs.imread(path);   // 读取样本文件
-
-            // 创建一个行数为sample_num, 列数为 rows*cols 的矩阵; 用于存放样本
-            /*if (trainingDataMat == null) {
-                trainingDataMat = new Mat(sample_num, inMat.rows() * inMat.cols(), CvType.CV_32F);
-            }*/
-
-            // 样本文件处理，这里是为了过滤不需要的特征，减少训练时间 // 根据实际情况需要进行处理
-            /*Mat greyMat = new Mat();
-            Imgproc.cvtColor(inMat, greyMat, Imgproc.COLOR_BGR2GRAY); // 转成灰度图
-
-            Mat dst = new Mat();
-            Imgproc.threshold(greyMat, dst, 100, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
-
-            Mat dst = new Mat(inMat.rows(), inMat.cols(), inMat.type());
-            Imgproc.Canny(greyMat, dst, 130, 250);*/
+            Mat dst = getFeature(inMat);    // 获取样本文件的特征
             
-            Mat dst = getFeature(inMat);
+            // 创建一个行数为sample_num, 列数为 rows*cols 的矩阵; 用于存放样本
             if (trainingDataMat == null) {
                 trainingDataMat = new Mat(sample_num, dst.rows() * dst.cols(), CvType.CV_32F);
             }
@@ -120,8 +104,7 @@ public class SVMTrain {
                 }
             }
 
-            trainingDataMat.put(i, 0, arr); // 多张图合并到一张
-           
+            trainingDataMat.put(i, 0, arr); // 多张图的特征合并到一个矩阵
         }
 
         // Imgcodecs.imwrite(DEFAULT_PATH + "trainingDataMat.jpg", trainingDataMat);
@@ -146,7 +129,6 @@ public class SVMTrain {
     }
 
 
-
     public static void pridect() {
         // 加载训练得到的 xml 模型文件
         SVM svm = SVM.load(MODEL_PATH); 
@@ -158,44 +140,13 @@ public class SVMTrain {
         doPridect(svm, DEFAULT_PATH + "test/debug_resize_3.jpg");
         doPridect(svm, DEFAULT_PATH + "test/S22_KG2187_3.jpg");
         doPridect(svm, DEFAULT_PATH + "test/S22_KG2187_5.jpg");
-
     }
 
     public static void doPridect(SVM svm, String imgPath) {
-        
-        Mat src = Imgcodecs.imread(imgPath);// 图片大小要和样本一致
-        /*Imgproc.cvtColor(src, src, Imgproc.COLOR_BGR2GRAY);
-
-        Mat dst = new Mat();
-        Imgproc.threshold(src, dst, 100, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
-
-        Mat dst = new Mat();
-        Imgproc.Canny(src, dst, 130, 250);
-
-        Mat samples = dst.reshape(1, 1);
-        samples.convertTo(samples, CvType.CV_32F);*/
-        
+        Mat src = Imgcodecs.imread(imgPath);
         Mat dst = getFeature(src);
-
-        // 等价于上面两行代码
-        /*Mat samples = new Mat(1, dst.cols() * dst.rows(), CvType.CV_32F);
-        float[] arr = new float[dst.cols() * dst.rows()];
-        int l = 0;
-        for (int j = 0; j < dst.rows(); j++) { // 遍历行
-            for (int k = 0; k < dst.cols(); k++) { // 遍历列
-                double[] a = dst.get(j, k);
-                arr[l] = (float) a[0];
-                l++;
-            }
-        }
-        samples.put(0, 0, arr);*/
-
-        // Imgcodecs.imwrite(DEFAULT_PATH + "test_1.jpg", samples);
-
         // 如果训练时使用这个标识，那么符合的图像会返回9.0
         float flag = svm.predict(dst);
-
-        // System.err.println(flag);
 
         if (flag == 0) {
             System.err.println(imgPath + "： 目标符合");

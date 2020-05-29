@@ -21,7 +21,6 @@ import org.opencv.imgproc.Imgproc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.yuxue.constant.Constant;
 
 
 /**
@@ -58,19 +57,14 @@ public class ImageUtil {
         // debugMap.put("specMat", 11); 
         // debugMap.put("chineseMat", 12);
         // debugMap.put("char_auxRoi", 13);
-
-        // 加载训练库文件
-        //loadAnnModel(Constant.DEFAULT_ANN_PATH);
-        //loadSvmModel(Constant.DEFAULT_SVM_PATH);
     }
-
 
     public static void main(String[] args) {
 
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        filename = tempPath + "/100_yuantu1.jpg";
-        //filename = tempPath + "/109_crop_0.png";
+        // filename = tempPath + "/100_yuantu4.jpg";
+        filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
 
@@ -226,12 +220,6 @@ public class ImageUtil {
     public static Mat threshold(Mat inMat, Boolean debug, String tempPath) {
         Mat dst = new Mat();
         Imgproc.threshold(inMat, dst, 100, 255, Imgproc.THRESH_OTSU + Imgproc.THRESH_BINARY);
-        /*for (int i = 0; i < dst.rows(); i++) {
-            for (int j = 0; j < dst.cols(); j++) {
-                System.err.println((int)dst.get(i, j)[0]);
-            }
-        }*/
-        
         if (debug) {
             Imgcodecs.imwrite(tempPath + (debugMap.get("threshold") + 100) + "_threshold.jpg", dst);
         }
@@ -260,7 +248,7 @@ public class ImageUtil {
             Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology0.jpg", dst);
         }
         
-        /*// 去除小连通区域
+        // 去除小连通区域
         Mat a = clearSmallConnArea(dst, 3, 10, false, tempPath);
         Mat b = clearSmallConnArea(a, 10, 3, false, tempPath);
         // 去除孔洞
@@ -269,8 +257,8 @@ public class ImageUtil {
         
         if (debug) {
             Imgcodecs.imwrite(tempPath + (debugMap.get("morphology") + 100) + "_morphology1.jpg", d);
-        }*/
-        return dst;
+        }
+        return d;
     }
 
 
