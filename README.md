@@ -72,14 +72,12 @@ Sobel 算子：
 ![1.png](./res/doc_image/debug_crop_1.jpg)
 ![1.png](./res/doc_image/debug_crop_2.jpg)
 ![1.png](./res/doc_image/debug_crop_3.jpg)
-![1.png](./res/doc_image/debug_crop_4.jpg)
 
 重置切图尺寸：
 
 ![1.png](./res/doc_image/debug_resize_1.jpg)
 ![1.png](./res/doc_image/debug_resize_2.jpg)
 ![1.png](./res/doc_image/debug_resize_3.jpg)
-![1.png](./res/doc_image/debug_resize_4.jpg)
 
 车牌检测结果:
 
