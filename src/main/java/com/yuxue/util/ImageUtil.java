@@ -57,11 +57,6 @@ public class ImageUtil {
         debugMap.put("screenblock", 0); // 外部轮廓筛选
         debugMap.put("crop", 0); // 切图
         debugMap.put("resize", 0); // 切图resize
-        debugMap.put("char_threshold", 0); 
-        debugMap.put("char_clearLiuDing", 0); // 去除柳钉
-        debugMap.put("specMat", 0); 
-        debugMap.put("chineseMat", 0);
-        debugMap.put("char_auxRoi", 0);
 
         // 设置index， 用于debug生成文件时候按名称排序
         Integer index = 100;
@@ -75,7 +70,7 @@ public class ImageUtil {
         Instant start = Instant.now();
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
         String filename = tempPath + "/100_yuantu.jpg";
-        filename = tempPath + "/100_yuantu4.jpg";
+        filename = tempPath + "/100_yuantu3.jpg";
         // filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
@@ -336,7 +331,6 @@ public class ImageUtil {
 
             if (checkPlateSize(mr) && angle <= DEFAULT_ANGLE) {  // 判断尺寸及旋转角度 ±30°，排除不合法的图块
                 mv.add(contours.get(i));
-
                 Size rect_size = new Size((int) mr.size.width, (int) mr.size.height);
                 if (mr.size.width / mr.size.height < 1) {   // 宽度小于高度
                     angle = 90 + angle; // 旋转90°
