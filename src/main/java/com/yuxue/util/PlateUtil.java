@@ -45,6 +45,7 @@ public class PlateUtil {
         debugMap.put("colorMatch", 0); 
         debugMap.put("plateThreshold", 0); 
         debugMap.put("plateContours", 0); 
+        debugMap.put("plateRect", 0); 
         debugMap.put("plateCrop", 0); 
         debugMap.put("char_clearLiuDing", 0); // 去除柳钉
         debugMap.put("specMat", 0); 
@@ -274,6 +275,10 @@ public class PlateUtil {
         Vector<Rect> rt = new Vector<Rect>();
         for (int i = 0; i < contours.size(); i++) {
             Rect mr = Imgproc.boundingRect(contours.get(i));
+            if(debug) {
+                Mat mat = new Mat(threshold, rt.get(i));
+                Imgcodecs.imwrite(tempPath + debugMap.get("plateRect") + "_plateRect_" + i + ".jpg", mat);
+            }
             if (checkCharSizes(mr)) {
                 rt.add(mr);
             }
@@ -299,7 +304,6 @@ public class PlateUtil {
 
     /**
      * 字符预处理: 统一每个字符的大小
-     * 
      * @param in
      * @return
      */
