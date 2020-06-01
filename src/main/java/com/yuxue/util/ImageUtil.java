@@ -24,6 +24,7 @@ import org.opencv.imgproc.Imgproc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.yuxue.enumtype.PlateColor;
 
 
 /**
@@ -69,8 +70,8 @@ public class ImageUtil {
     public static void main(String[] args) {
         Instant start = Instant.now();
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
-        String filename = tempPath + "/100_yuantu.jpg";
-        filename = tempPath + "/100_yuantu3.jpg";
+         String filename = tempPath + "/100_yuantu.jpg";
+        filename = tempPath + "/100_yuantu1.jpg";
         // filename = tempPath + "/109_crop_0.png";
 
         Mat src = Imgcodecs.imread(filename);
@@ -79,10 +80,10 @@ public class ImageUtil {
 
         Mat gsMat = ImageUtil.gaussianBlur(src, debug, tempPath);
 
-        Mat grey = ImageUtil.grey(gsMat, debug, tempPath);
+        Mat gray = ImageUtil.gray(gsMat, debug, tempPath);
 
-        Mat sobel = ImageUtil.sobel(grey, debug, tempPath);
-        // Mat sobel = ImageUtil.scharr(grey, debug, tempPath);
+        Mat sobel = ImageUtil.sobel(gray, debug, tempPath);
+        // Mat sobel = ImageUtil.scharr(gray, debug, tempPath);
 
         Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
 
@@ -92,17 +93,32 @@ public class ImageUtil {
 
         Vector<Mat> rects = ImageUtil.screenBlock(src, contours, debug, tempPath);
 
+        PlateUtil.loadSvmModel("D:/PlateDetect/train/plate_detect_svm/svm2.xml");
+        PlateUtil.loadAnnModel("D:/PlateDetect/train/chars_recognise_ann/ann.xml");
+        
         Vector<Mat> dst = new Vector<Mat>();
-        PalteUtil.hasPlate(rects, dst, "D:/PlateDetect/train/plate_detect_svm/svm2.xml", debug, tempPath);
-
+        PlateUtil.hasPlate(rects, dst, debug, tempPath);
+        
         System.err.println("识别到的车牌数量：" + dst.size());
+        dst.stream().forEach(inMat -> {
+            PlateColor color = PlateUtil.getPlateColor(inMat, true, debug, tempPath);
+            System.err.println(color.desc);
+
+            Vector<Mat> charMat = new Vector<Mat>();
+            PlateUtil.charsSegment(inMat, color, charMat, debug, tempPath);
+            
+        });
+        
+        /*String filename = tempPath + "/hsvMat_1590994270425.jpg";
+        Mat src = Imgcodecs.imread(filename);
+        Vector<Mat> charMat = new Vector<Mat>();
+        PlateUtil.charsSegment(src, PlateColor.BLUE, charMat, true, tempPath);*/
 
         // ImageUtil.rgb2Hsv(src, debug, tempPath);
         // ImageUtil.getHSVValue(src, debug, tempPath);
 
         Instant end = Instant.now();
         System.err.println("总耗时：" + Duration.between(start, end).toMillis());
-
     }
 
 
@@ -131,7 +147,7 @@ public class ImageUtil {
      * @param tempPath
      * @return
      */
-    public static Mat grey(Mat inMat, Boolean debug, String tempPath) {
+    public static Mat gray(Mat inMat, Boolean debug, String tempPath) {
         Mat dst = new Mat();
         Imgproc.cvtColor(inMat, dst, Imgproc.COLOR_BGR2GRAY);
         if (debug) {
@@ -291,7 +307,6 @@ public class ImageUtil {
         // CV_CHAIN_APPROX_NONE 保存物体边界上所有连续的轮廓点到contours向量内
         Imgproc.findContours(inMat, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE);
 
-        // 在小连接处分割轮廓
         if (debug) {
             Mat result = new Mat();
             src.copyTo(result); //  复制一张图，不在原图上进行操作，防止后续需要使用原图
@@ -346,7 +361,7 @@ public class ImageUtil {
                 Mat img_crop = new Mat();
                 Imgproc.getRectSubPix(src, rect_size, mr.center, img_crop);
                 if (debug) {
-                    Imgcodecs.imwrite(tempPath + debugMap.get("crop") + "_crop_" + j + ".png", img_crop);
+                    // Imgcodecs.imwrite(tempPath + debugMap.get("crop") + "_crop_" + j + ".png", img_crop);
                 }
                 // 处理切图，调整为指定大小
                 Mat resized = new Mat(HEIGHT, WIDTH, TYPE);
@@ -424,7 +439,7 @@ public class ImageUtil {
         Core.merge(hsvSplit, dst);
 
         if (debug) {
-            Imgcodecs.imwrite(tempPath + "hsvMat_"+System.currentTimeMillis()+".jpg", dst);
+            // Imgcodecs.imwrite(tempPath + "hsvMat_"+System.currentTimeMillis()+".jpg", dst);
         }
         return dst;
     }
