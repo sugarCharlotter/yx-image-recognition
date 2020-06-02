@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yuxue.constant.Constant;
 import com.yuxue.enumtype.PlateColor;
+import com.yuxue.train.ANNTrain;
 import com.yuxue.train.SVMTrain;
 
 
@@ -58,7 +59,8 @@ public class PlateUtil {
             entry.setValue(index);
             index ++;
         }
-
+        
+        // 这个位置加载模型文件会报错，暂时没时间定位啥问题报错
         /*loadSvmModel("D:/PlateDetect/train/plate_detect_svm/svm2.xml");
         loadAnnModel("D:/PlateDetect/train/chars_recognise_ann/ann.xml");*/
     }
@@ -288,16 +290,34 @@ public class PlateUtil {
         Vector<Rect> sorted = new Vector<Rect>();
         sortRect(rt, sorted);
 
+        String plate = "";
         Vector<Mat> dst = new Vector<Mat>();
+        
+        ANNTrain annT = new ANNTrain();
         for (int i = 0; i < sorted.size(); i++) {
             Mat img_crop = new Mat(threshold, sorted.get(i));
             img_crop = preprocessChar(img_crop);
             dst.add(img_crop);
-            Imgcodecs.imwrite(tempPath + debugMap.get("plateCrop") + "_plateCrop_" + i + ".jpg", img_crop);
+            if(debug) {
+                Imgcodecs.imwrite(tempPath + debugMap.get("plateCrop") + "_plateCrop_" + i + ".jpg", img_crop);
+            }
+            
+            
+            Mat f = annT.features(img_crop, Constant.predictSize);
+            
+            // 字符预测
+            Mat output = new Mat(1, 140, CvType.CV_32F);
+            int index = (int) ann.predict(f, output, 0);
+            
+            if (index < Constant.numCharacter) {
+                plate += String.valueOf(Constant.strCharacters[index]);
+            } else {
+                String s = Constant.strChinese[index - Constant.numCharacter];
+                plate += Constant.KEY_CHINESE_MAP.get(s);
+            }
         }
-
+        System.err.println("===>" + plate);
         
-
         return;
     }
 

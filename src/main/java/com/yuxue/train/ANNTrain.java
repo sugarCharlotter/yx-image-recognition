@@ -45,7 +45,7 @@ public class ANNTrain {
     // 训练模型文件保存位置
     private static final String MODEL_PATH = DEFAULT_PATH + "ann.xml";
 
-    
+
     public static float[] projectedHistogram(final Mat img, Direction direction) {
         int sz = 0;
         switch (direction) {
@@ -121,12 +121,10 @@ public class ANNTrain {
         for (int i = 0; i < Constant.numCharacter; i++) {
             String str = DEFAULT_PATH + "learn/" + Constant.strCharacters[i];
             Vector<String> files = new Vector<String>();
-            FileUtil.getFiles(str, files);
-
-            int size = (int) files.size();
-            for (int j = 0; j < size; j++) {
-                Mat img = Imgcodecs.imread(files.get(j), 0);
-                // System.err.println(files.get(j)); // 文件名不能包含中文
+            FileUtil.getFiles(str, files);  // 文件名不能包含中文
+            
+            for (String filePath : files) {
+                Mat img = Imgcodecs.imread(filePath);
                 Mat f = features(img, _predictsize);
                 samples.push_back(f);
                 trainingLabels.add(i); // 每一幅字符图片所对应的字符类别索引下标
@@ -138,22 +136,18 @@ public class ANNTrain {
             String str = DEFAULT_PATH + "learn/" + Constant.strChinese[i];
             Vector<String> files = new Vector<String>();
             FileUtil.getFiles(str, files);
-
-            int size = (int) files.size();
-            for (int j = 0; j < size; j++) {
-                Mat img = Imgcodecs.imread(files.get(j), 0);
-                // System.err.println(files.get(j));   // 文件名不能包含中文
+            for (String filePath : files) {
+                Mat img = Imgcodecs.imread(filePath);
                 Mat f = features(img, _predictsize);
                 samples.push_back(f);
-                trainingLabels.add(i + Constant.numCharacter);
+                trainingLabels.add(i + Constant.numCharacter); // 每一幅字符图片所对应的字符类别索引下标
             }
         }
-
 
         //440   vhist.length + hhist.length + lowData.cols() * lowData.rows();
         // CV_32FC1 CV_32SC1 CV_32F
         Mat classes = new Mat(trainingLabels.size(), Constant.numAll, CvType.CV_32F);
-        
+
         float[] labels = new float[trainingLabels.size()];
         for (int i = 0; i < labels.length; ++i) {
             classes.put(i, trainingLabels.get(i), 1.f);
@@ -167,8 +161,8 @@ public class ANNTrain {
         layers.put(0, 0, samples.cols());
         layers.put(0, 1, _neurons);
         layers.put(0, 2, classes.cols());
-        
-        System.out.println(layers);
+
+        // System.out.println(layers);
 
         ann.setLayerSizes(layers);
         ann.setActivationFunction(ANN_MLP.SIGMOID_SYM, 1, 1);
@@ -183,32 +177,42 @@ public class ANNTrain {
         // ann.write(fsto, "ann");
         ann.save(MODEL_PATH);
     }
-    
-    
+
+
     public void predict() {
         ann.clear();
         ann = ANN_MLP.load(MODEL_PATH);
         Vector<String> files = new Vector<String>();
         FileUtil.getFiles(DEFAULT_PATH + "test/", files);
-        
+
+        String plate = "";
         for (String string : files) {
             Mat img = Imgcodecs.imread(string, 0);
             Mat f = features(img, Constant.predictSize);
-            
+
             // 140 predictSize = 10; vhist.length + hhist.length + lowData.cols() * lowData.rows();
             // 440 predictSize = 20;
             Mat output = new Mat(1, 140, CvType.CV_32F);
             //ann.predict(f, output, 0);  // 预测结果
-            System.err.println(string + "===>" + (int) ann.predict(f, output, 0));
-            
+
             // ann.predict(f, output, 0);
             // System.err.println(string + "===>" + output.get(0, 0)[0]);
-            
+
+            int index = (int) ann.predict(f, output, 0);
+            System.err.println(string + "===>" + index);
+
+            if (index < Constant.numCharacter) {
+                plate += String.valueOf(Constant.strCharacters[index]);
+            } else {
+                String s = Constant.strChinese[index - Constant.numCharacter];
+                plate += Constant.KEY_CHINESE_MAP.get(s);
+            }
         }
+        System.err.println("===>" + plate);
     }
 
     public static void main(String[] args) {
-        
+
         ANNTrain annT = new ANNTrain();
         // 这里演示只训练model文件夹下的ann.xml，此模型是一个predictSize=10,neurons=40的ANN模型
         // 可根据需要训练不同的predictSize或者neurons的ANN模型
@@ -216,7 +220,7 @@ public class ANNTrain {
         // annT.train(Constant.predictSize, Constant.neurons);
 
         annT.predict();
-        
+
         System.out.println("The end.");
     }
 

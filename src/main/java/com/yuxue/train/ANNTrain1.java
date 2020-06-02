@@ -128,7 +128,7 @@ public class ANNTrain1 {
             int index = (int) ann.predict(f, output, 0);
             
             String result = "";
-            if (index <= Constant.numCharacter) {
+            if (index < Constant.numCharacter) {
                 result = String.valueOf(Constant.strCharacters[index]);
             } else {
                 String s = Constant.strChinese[index - Constant.numCharacter];
