@@ -8,8 +8,8 @@ package com.yuxue.enumtype;
  */
 public enum PlateColor {
 
-    BLUE("BLUE","蓝牌", 100, 140), 
-    GREEN("GREEN","绿牌", 8, 150), 
+    BLUE("BLUE","蓝牌", 100, 130), 
+    GREEN("GREEN","绿牌", 38, 100), 
     YELLOW("YELLOW","黄牌", 15, 40),
     UNKNOWN("UNKNOWN","未知", 0, 0);
 

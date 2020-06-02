@@ -140,16 +140,15 @@ public class PlateUtil {
      */
     public static PlateColor getPlateColor(Mat inMat, Boolean adaptive_minsv, Boolean debug, String tempPath) {
         // 判断阈值
-        final float thresh = 0.49f;
-
-        if(colorMatch(inMat, PlateColor.BLUE, adaptive_minsv, debug, tempPath) > thresh) {
-            return PlateColor.BLUE;
+        final float thresh = 0.70f;
+        if(colorMatch(inMat, PlateColor.GREEN, adaptive_minsv, debug, tempPath) > thresh) {
+            return PlateColor.GREEN;
         }
         if(colorMatch(inMat, PlateColor.YELLOW, adaptive_minsv, debug, tempPath) > thresh) {
             return PlateColor.YELLOW;
         }
-        if(colorMatch(inMat, PlateColor.GREEN, adaptive_minsv, debug, tempPath) > thresh) {
-            return PlateColor.GREEN;
+        if(colorMatch(inMat, PlateColor.BLUE, adaptive_minsv, debug, tempPath) > thresh) {
+            return PlateColor.BLUE;
         }
         return PlateColor.UNKNOWN;
     }
@@ -275,10 +274,10 @@ public class PlateUtil {
         Vector<Rect> rt = new Vector<Rect>();
         for (int i = 0; i < contours.size(); i++) {
             Rect mr = Imgproc.boundingRect(contours.get(i));
-            if(debug) {
-                Mat mat = new Mat(threshold, rt.get(i));
+            /*if(debug) {
+                Mat mat = new Mat(threshold, mr);
                 Imgcodecs.imwrite(tempPath + debugMap.get("plateRect") + "_plateRect_" + i + ".jpg", mat);
-            }
+            }*/
             if (checkCharSizes(mr)) {
                 rt.add(mr);
             }
