@@ -24,6 +24,7 @@ import org.opencv.imgproc.Imgproc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.yuxue.constant.Constant;
 import com.yuxue.enumtype.PlateColor;
 
 
@@ -70,22 +71,27 @@ public class ImageUtil {
     public static void main(String[] args) {
         Instant start = Instant.now();
         String tempPath = DEFAULT_BASE_TEST_PATH + "test/";
-         String filename = tempPath + "/100_yuantu.jpg";
+        String filename = tempPath + "/100_yuantu.jpg";
         filename = tempPath + "/100_yuantu1.jpg";
         // filename = tempPath + "/109_crop_0.png";
 
+        // 读取原图
         Mat src = Imgcodecs.imread(filename);
 
         Boolean debug = true;
 
+        // 高斯模糊
         Mat gsMat = ImageUtil.gaussianBlur(src, debug, tempPath);
 
+        // 灰度图
         Mat gray = ImageUtil.gray(gsMat, debug, tempPath);
 
         Mat sobel = ImageUtil.sobel(gray, debug, tempPath);
-        // Mat sobel = ImageUtil.scharr(gray, debug, tempPath);
 
         Mat threshold = ImageUtil.threshold(sobel, debug, tempPath);
+
+        // Mat scharr = ImageUtil.scharr(gray, debug, tempPath);
+        // Mat threshold = ImageUtil.threshold(scharr, debug, tempPath);
 
         Mat morphology = ImageUtil.morphology(threshold, debug, tempPath);
 
@@ -95,10 +101,10 @@ public class ImageUtil {
 
         PlateUtil.loadSvmModel("D:/PlateDetect/train/plate_detect_svm/svm2.xml");
         PlateUtil.loadAnnModel("D:/PlateDetect/train/chars_recognise_ann/ann.xml");
-        
+
         Vector<Mat> dst = new Vector<Mat>();
         PlateUtil.hasPlate(rects, dst, debug, tempPath);
-        
+
         System.err.println("识别到的车牌数量：" + dst.size());
         dst.stream().forEach(inMat -> {
             PlateColor color = PlateUtil.getPlateColor(inMat, true, debug, tempPath);
@@ -106,19 +112,20 @@ public class ImageUtil {
 
             Vector<Mat> charMat = new Vector<Mat>();
             PlateUtil.charsSegment(inMat, color, charMat, debug, tempPath);
-            
+
+
         });
-        
+
         /*String filename = tempPath + "/hsvMat_1590994270425.jpg";
         Mat src = Imgcodecs.imread(filename);
         Vector<Mat> charMat = new Vector<Mat>();
         PlateUtil.charsSegment(src, PlateColor.BLUE, charMat, true, tempPath);*/
 
-        // ImageUtil.rgb2Hsv(src, debug, tempPath);
-        // ImageUtil.getHSVValue(src, debug, tempPath);
-
         Instant end = Instant.now();
         System.err.println("总耗时：" + Duration.between(start, end).toMillis());
+
+        // ImageUtil.rgb2Hsv(src, debug, tempPath);
+        // ImageUtil.getHSVValue(src, debug, tempPath);
     }
 
 
@@ -160,7 +167,7 @@ public class ImageUtil {
 
     /**
      * 对图像进行Sobel 运算，得到图像的一阶水平方向导数
-     * @param inMat
+     * @param inMat 灰度图
      * @param debug
      * @param tempPath
      * @return
@@ -170,22 +177,22 @@ public class ImageUtil {
     public static final int SOBEL_X_WEIGHT = 1;
     public static final int SOBEL_Y_WEIGHT = 0;
     public static Mat sobel(Mat inMat, Boolean debug, String tempPath) {
-
         Mat dst = new Mat();
-
         Mat grad_x = new Mat();
         Mat grad_y = new Mat();
         Mat abs_grad_x = new Mat();
         Mat abs_grad_y = new Mat();
 
-        Imgproc.Sobel(inMat, grad_x, CvType.CV_16S, 1, 0, 3, SOBEL_SCALE, SOBEL_DELTA, Core.BORDER_DEFAULT);
-        Core.convertScaleAbs(grad_x, abs_grad_x);
+        // Sobel滤波 计算水平方向灰度梯度的绝对值
+        Imgproc.Sobel(inMat, grad_x, CvType.CV_16S, 1, 0, 3, SOBEL_SCALE, SOBEL_DELTA, Core.BORDER_DEFAULT); 
+        Core.convertScaleAbs(grad_x, abs_grad_x);   // 增强对比度
 
         Imgproc.Sobel(inMat, grad_y, CvType.CV_16S, 0, 1, 3, SOBEL_SCALE, SOBEL_DELTA, Core.BORDER_DEFAULT);
         Core.convertScaleAbs(grad_y, abs_grad_y);
         grad_x.release();
         grad_y.release();
 
+        // 计算结果梯度
         Core.addWeighted(abs_grad_x, SOBEL_X_WEIGHT, abs_grad_y, SOBEL_Y_WEIGHT, 0, dst);
         abs_grad_x.release();
         abs_grad_y.release();
@@ -235,8 +242,8 @@ public class ImageUtil {
 
 
     /**
-     * 对图像进行二值化。将灰度图像（每个像素点有256 个取值可能）
-     * 转化为二值图像（每个像素点仅有1 和0 两个取值可能）
+     * 对图像进行二值化。将灰度图像（每个像素点有256个取值可能， 0代表黑色，255代表白色）  
+     * 转化为二值图像（每个像素点仅有1和0两个取值可能）
      * @param inMat
      * @param debug
      * @param tempPath
@@ -260,7 +267,7 @@ public class ImageUtil {
      * @param tempPath
      * @return
      */
-    //public static final int DEFAULT_MORPH_SIZE_WIDTH = 15;
+    // public static final int DEFAULT_MORPH_SIZE_WIDTH = 15;
     // public static final int DEFAULT_MORPH_SIZE_HEIGHT = 3;
     public static final int DEFAULT_MORPH_SIZE_WIDTH = 9;
     public static final int DEFAULT_MORPH_SIZE_HEIGHT = 3;
@@ -328,8 +335,6 @@ public class ImageUtil {
      * @return
      */
     public static final int DEFAULT_ANGLE = 30; // 角度判断所用常量
-    public static final int WIDTH = 136;
-    public static final int HEIGHT = 36;
     public static final int TYPE = CvType.CV_8UC3;
     public static Vector<Mat> screenBlock(Mat src, List<MatOfPoint> contours, Boolean debug, String tempPath){
         Vector<Mat> dst = new Vector<Mat>();
@@ -353,18 +358,20 @@ public class ImageUtil {
                 }
 
                 // 旋转角度，根据需要是否进行角度旋转
-                Mat img_rotated = new Mat();
+                /*Mat img_rotated = new Mat();
                 Mat rotmat = Imgproc.getRotationMatrix2D(mr.center, angle, 1); // 旋转
-                Imgproc.warpAffine(src, img_rotated, rotmat, src.size()); // 仿射变换
-
+                Imgproc.warpAffine(src, img_rotated, rotmat, src.size()); // 仿射变换  考虑是否需要进行投影变换？
+                 */
+                
                 // 切图
                 Mat img_crop = new Mat();
                 Imgproc.getRectSubPix(src, rect_size, mr.center, img_crop);
                 if (debug) {
-                    // Imgcodecs.imwrite(tempPath + debugMap.get("crop") + "_crop_" + j + ".png", img_crop);
+                    Imgcodecs.imwrite(tempPath + debugMap.get("crop") + "_crop_" + j + ".png", img_crop);
                 }
+                
                 // 处理切图，调整为指定大小
-                Mat resized = new Mat(HEIGHT, WIDTH, TYPE);
+                Mat resized = new Mat(Constant.DEFAULT_HEIGHT, Constant.DEFAULT_WIDTH, TYPE);
                 Imgproc.resize(img_crop, resized, resized.size(), 0, 0, Imgproc.INTER_CUBIC);
                 if (debug) {
                     Imgcodecs.imwrite(tempPath + debugMap.get("resize") + "_resize_" + j + ".png", resized);
@@ -396,10 +403,6 @@ public class ImageUtil {
     final static float DEFAULT_ASPECT = 3.142857f;
     public static final int DEFAULT_VERIFY_MIN = 1;
     public static final int DEFAULT_VERIFY_MAX = 30;
-    /*final static float DEFAULT_ERROR = 0.9f;
-    final static float DEFAULT_ASPECT = 4f;
-    public static final int DEFAULT_VERIFY_MIN = 1;
-    public static final int DEFAULT_VERIFY_MAX = 30;*/
     private static boolean checkPlateSize(RotatedRect mr) {
 
         // 切图面积取值范围
@@ -414,9 +417,9 @@ public class ImageUtil {
         int area = (int) (mr.size.height * mr.size.width);
         // 切图宽高比
         double r = mr.size.width / mr.size.height;
-        if (r < 1) {
+        /*if (r < 1) {  // 注释掉，不处理width 小于height的图片
             r = mr.size.height / mr.size.width;
-        }
+        }*/
         return min <= area && area <= max && rmin <= r && r <= rmax;
     }
 

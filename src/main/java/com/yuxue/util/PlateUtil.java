@@ -32,6 +32,7 @@ import com.yuxue.train.SVMTrain;
  * 车牌处理工具类
  * 车牌切图按字符分割
  * 字符识别
+ * 未完成
  * @author yuxue
  * @date 2020-05-28 15:11
  */
@@ -85,7 +86,6 @@ public class PlateUtil {
         /*System.err.println(PalteUtil.isPlate("粤AI234K"));
         System.err.println(PalteUtil.isPlate("鄂CD3098"));*/
 
-        System.err.println("done!!!");
     }
 
 
@@ -111,12 +111,10 @@ public class PlateUtil {
      * @param inMat
      * @param dst 包含车牌的图块
      */
-    public static final int DEFAULT_WIDTH = 136;
-    public static final int DEFAULT_HEIGHT = 36;
     public static void hasPlate(Vector<Mat> inMat, Vector<Mat> dst, Boolean debug, String tempPath) {
         int i = 0;
         for (Mat src : inMat) {
-            if(src.rows() == DEFAULT_HEIGHT && src.cols() == DEFAULT_WIDTH) {
+            if(src.rows() == Constant.DEFAULT_HEIGHT && src.cols() == Constant.DEFAULT_WIDTH) {
                 Mat samples = SVMTrain.getFeature(src);
                 float flag = svm.predict(samples);
                 if (flag == 0) {
@@ -129,6 +127,8 @@ public class PlateUtil {
                 } else {
                     System.out.println("目标不符合");
                 }
+            } else {
+                System.err.println("非法图块");
             }
         }
         return;
@@ -301,7 +301,6 @@ public class PlateUtil {
             if(debug) {
                 Imgcodecs.imwrite(tempPath + debugMap.get("plateCrop") + "_plateCrop_" + i + ".jpg", img_crop);
             }
-            
             
             Mat f = annT.features(img_crop, Constant.predictSize);
             
