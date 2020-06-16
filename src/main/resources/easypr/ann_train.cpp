@@ -9,6 +9,8 @@
 #include "easypr/train/create_data.h"
 #include "easypr/util/util.h"
 
+
+
 // 原版C++语言  训练代码
 namespace easypr {
 
@@ -76,7 +78,7 @@ void AnnTrain::train() {
     return;
   }
 
-  //using raw data or raw + synthic data.
+  // 使用原始数据  或者原始数据+合成数据
   auto traindata = sdata(350);
 
   ann_->train(traindata);
@@ -224,7 +226,7 @@ cv::Mat getSyntheticImage(const Mat& image) {
   return result;
 }
 
-
+// 处理训练文件
 cv::Ptr<cv::ml::TrainData> AnnTrain::sdata(size_t number_for_count) {
   assert(chars_folder_);
 
@@ -319,5 +321,4 @@ cv::Ptr<cv::ml::TrainData> AnnTrain::tdata() {
 
   return cv::ml::TrainData::create(samples_, cv::ml::SampleTypes::ROW_SAMPLE, train_classes);
 }
-
 }
