@@ -9,8 +9,6 @@
 #include "easypr/train/create_data.h"
 #include "easypr/util/util.h"
 
-
-
 // 原版C++语言  训练代码
 namespace easypr {
 
@@ -88,7 +86,7 @@ void AnnTrain::train() {
   test();
 }
 
-// 识别中文
+// 识别 中文
 std::pair<std::string, std::string> AnnTrain::identifyChinese(cv::Mat input) {
   cv::Mat feature = charFeatures2(input, kPredictSize);
   float maxVal = -2;
@@ -113,19 +111,16 @@ std::pair<std::string, std::string> AnnTrain::identifyChinese(cv::Mat input) {
   return std::make_pair(s, province);
 }
 
-
+// 识别 字符
 std::pair<std::string, std::string> AnnTrain::identify(cv::Mat input) {
   cv::Mat feature = charFeatures2(input, kPredictSize);
   float maxVal = -2;
   int result = 0;
 
-  //std::cout << feature << std::endl;
   cv::Mat output(1, kCharsTotalNumber, CV_32FC1);
   ann_->predict(feature, output);
-  //std::cout << output << std::endl;
   for (int j = 0; j < kCharsTotalNumber; j++) {
     float val = output.at<float>(j);
-    //std::cout << "j:" << j << "val:" << val << std::endl;
     if (val > maxVal) {
       maxVal = val;
       result = j;
@@ -144,6 +139,7 @@ std::pair<std::string, std::string> AnnTrain::identify(cv::Mat input) {
   }
 }
 
+// 测试并计算准确率
 void AnnTrain::test() {
   assert(chars_folder_);
 
@@ -165,9 +161,8 @@ void AnnTrain::test() {
     std::vector<std::pair<std::string, std::string>> error_files;
 
     for (auto file : chars_files) {
-      auto img = cv::imread(file, 0);  // a grayscale image
+      auto img = cv::imread(file, 0);  // 读取灰度图像
       if (!img.data) {
-        //cout << "Null pointer!" << endl;
         continue;
       }
       std::pair<std::string, std::string> ch;
@@ -185,7 +180,6 @@ void AnnTrain::test() {
       ++sum_all;
     }
     float rate = (float)corrects / (sum == 0 ? 1 : sum);
-    fprintf(stdout, ">>   [sum: %d, correct: %d, rate: %.2f]\n", sum, corrects, rate);
     rate_list.push_back(rate);
 
     std::string error_string;
@@ -195,8 +189,7 @@ void AnnTrain::test() {
     }
     for (auto k = error_files.begin(); k != end; ++k) {
       auto kv = *k;
-      error_string.append("       ").append(kv.first).append(": ").append(
-          kv.second);
+      error_string.append("       ").append(kv.first).append(": ").append(kv.second);
       if (k != end - 1) {
         error_string.append(",\n");
       } else {
@@ -205,8 +198,7 @@ void AnnTrain::test() {
     }
     fprintf(stdout, ">>   [\n%s\n     ]\n", error_string.c_str());
   }
-  fprintf(stdout, ">>   [sum_all: %d, correct_all: %d, rate: %.4f]\n", sum_all, corrects_all,
-    (float)corrects_all / (sum_all == 0 ? 1 : sum_all));
+  fprintf(stdout, ">>   [sum_all: %d, correct_all: %d, rate: %.4f]\n", sum_all, corrects_all, (float)corrects_all / (sum_all == 0 ? 1 : sum_all));
 
   double rate_sum = std::accumulate(rate_list.begin(), rate_list.end(), 0.0);
   double rate_mean = rate_sum / (rate_list.size() == 0 ? 1 : rate_list.size());
@@ -214,6 +206,7 @@ void AnnTrain::test() {
   fprintf(stdout, ">>   [classNumber: %d, avg_rate: %.4f]\n", classNumber, rate_mean);
 }
 
+// 获取合成图像
 cv::Mat getSyntheticImage(const Mat& image) {
   int rand_type = rand();
   Mat result = image.clone();
@@ -223,15 +216,14 @@ cv::Mat getSyntheticImage(const Mat& image) {
     int ran_y = rand() % 5 - 2;
 
     result = translateImg(result, ran_x, ran_y);
-  }
-  else if (rand_type % 2 != 0) {
+  } else if (rand_type % 2 != 0) {
     float angle = float(rand() % 15 - 7);
-
     result = rotateImg(result, angle);
   }
   
   return result;
 }
+
 
 cv::Ptr<cv::ml::TrainData> AnnTrain::sdata(size_t number_for_count) {
   assert(chars_folder_);
@@ -269,18 +261,10 @@ cv::Ptr<cv::ml::TrainData> AnnTrain::sdata(size_t number_for_count) {
       auto img = matVec.at(ran_num);
       auto simg = getSyntheticImage(img);
       matVec.push_back(simg);
-      if (1) {
-        std::stringstream ss(std::stringstream::in | std::stringstream::out);
-        ss << sub_folder << "/" << i << "_" << t << "_" << ran_num << ".jpg";
-        imwrite(ss.str(), simg);
-      }
     }
-
-    fprintf(stdout, ">> Characters count: %d \n", (int)matVec.size());
 
     for (auto img : matVec) {
       auto fps = charFeatures2(img, kPredictSize);
-
       samples.push_back(fps);
       labels.push_back(i);
     }
@@ -288,15 +272,13 @@ cv::Ptr<cv::ml::TrainData> AnnTrain::sdata(size_t number_for_count) {
 
   cv::Mat samples_;
   samples.convertTo(samples_, CV_32F);
-  cv::Mat train_classes =
-    cv::Mat::zeros((int)labels.size(), classNumber, CV_32F);
+  cv::Mat train_classes =  cv::Mat::zeros((int)labels.size(), classNumber, CV_32F);
 
   for (int i = 0; i < train_classes.rows; ++i) {
     train_classes.at<float>(i, labels[i]) = 1.f;
   }
 
-  return cv::ml::TrainData::create(samples_, cv::ml::SampleTypes::ROW_SAMPLE,
-    train_classes);
+  return cv::ml::TrainData::create(samples_, cv::ml::SampleTypes::ROW_SAMPLE, train_classes);
 }
 
 cv::Ptr<cv::ml::TrainData> AnnTrain::tdata() {
@@ -316,14 +298,12 @@ cv::Ptr<cv::ml::TrainData> AnnTrain::tdata() {
     char sub_folder[512] = {0};
 
     sprintf(sub_folder, "%s/%s", chars_folder_, char_key);
-    std::cout << "  >> Featuring characters " << char_key << " in "
-              << sub_folder << std::endl;
+    std::cout << "  >> Featuring characters " << char_key << " in " << sub_folder << std::endl;
 
     auto chars_files = utils::getFiles(sub_folder);
     for (auto file : chars_files) {
-      auto img = cv::imread(file, 0);  // a grayscale image
+      auto img = cv::imread(file, 0);  // 读取灰度图像
       auto fps = charFeatures2(img, kPredictSize);
-
       samples.push_back(fps);
       labels.push_back(i);
     }
@@ -331,14 +311,13 @@ cv::Ptr<cv::ml::TrainData> AnnTrain::tdata() {
 
   cv::Mat samples_;
   samples.convertTo(samples_, CV_32F);
-  cv::Mat train_classes =
-    cv::Mat::zeros((int)labels.size(), classNumber, CV_32F);
+  cv::Mat train_classes = cv::Mat::zeros((int)labels.size(), classNumber, CV_32F);
 
   for (int i = 0; i < train_classes.rows; ++i) {
     train_classes.at<float>(i, labels[i]) = 1.f;
   }
 
-  return cv::ml::TrainData::create(samples_, cv::ml::SampleTypes::ROW_SAMPLE,
-                                   train_classes);
+  return cv::ml::TrainData::create(samples_, cv::ml::SampleTypes::ROW_SAMPLE, train_classes);
 }
+
 }
