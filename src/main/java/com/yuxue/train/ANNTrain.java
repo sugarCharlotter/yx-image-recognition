@@ -135,6 +135,9 @@ public class ANNTrain {
             float angle = (float) (rand.nextInt(10000) % 15 - 7); // 旋转角度控制在0-7°范围内
             result = rotateImg(result, angle);  // 旋转
         }*/
+        
+        // 腐蚀算法
+        
         return result;
     }
 
@@ -183,7 +186,7 @@ public class ANNTrain {
             Vector<String> files = new Vector<String>();
             FileUtil.getFiles(str, files);  // 文件名不能包含中文
 
-            int count = 200; // 控制每个字符，最多只允许有200个样本文件
+            int count = 100; // 控制每个字符，最多只允许有200个样本文件
             int k = 0;
             // System.out.println("数字+字母：\t" + files.size());
             for (String filePath : files) {
@@ -281,36 +284,31 @@ public class ANNTrain {
             Mat img = Imgcodecs.imread(string, 0);
             Mat f = features(img, Constant.predictSize);
 
-            /*// 140 predictSize = 10; vhist.length + hhist.length + lowData.cols() * lowData.rows();
+            // 140 predictSize = 10; vhist.length + hhist.length + lowData.cols() * lowData.rows();
             // 440 predictSize = 20;
-            Mat output = new Mat(1, 140, CvType.CV_32F);
-            //ann.predict(f, output, 0);  // 预测结果
-
-            // ann.predict(f, output, 0);
-            // System.err.println(string + "===>" + output.get(0, 0)[0]);
-
-            int index = (int) ann.predict(f, output, 0);
-            System.err.println(string + "===>" + index);
-
-            if (index < Constant.numCharacter) {
-                plate += String.valueOf(Constant.strCharacters[index]);
-            } else {
-                String s = Constant.strChinese[index - Constant.numCharacter];
-                plate += Constant.KEY_CHINESE_MAP.get(s);
-            }*/
-
+            
             int index = 0;
             double maxVal = -2;
             Mat output = new Mat(1, Constant.numAll, CvType.CV_32F);
-            ann.predict(f, output);  // 预测结果
+            ann.predict(f, output);  // 预测结果    // 可以考虑将样本进行平移、旋转、腐蚀等算法，进行多次预测，取最大值--未实现
             for (int j = 0; j < Constant.numAll; j++) {
                 double val = output.get(0, j)[0];
                 if (val > maxVal) {
                     maxVal = val;
                     index = j;
+                   
+                    // 输出预测可能的值
+                    String charValue = "";
+                    if (index < Constant.numCharacter) {
+                        charValue = String.valueOf(Constant.strCharacters[index]);
+                    } else {
+                        String s = Constant.strChinese[index - Constant.numCharacter];
+                        charValue = Constant.KEY_CHINESE_MAP.get(s);
+                    }
+                    System.out.println(string + "==>" + j + "\t\t" + charValue + "\t" + val);
                 }
             }
-            System.err.println(index);
+            
             if (index < Constant.numCharacter) {
                 plate += String.valueOf(Constant.strCharacters[index]);
             } else {
