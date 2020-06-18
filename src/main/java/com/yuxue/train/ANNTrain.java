@@ -126,18 +126,26 @@ public class ANNTrain {
         Random rand = new Random();
         int rand_type = rand.nextInt(10000);
         Mat result = inMat.clone();
-        // if (rand_type % 2 == 0) {
-        int ran_x = rand.nextInt(10000) % 5 - 2; // 控制在0-3个像素范围内
+        if (rand_type % 2 == 0) {
+        int ran_x = rand.nextInt(10000) % 5 - 2; // 控制在-2~3个像素范围内
         int ran_y = rand.nextInt(10000) % 5 - 2;
         result = translateImg(result, ran_x, ran_y);    // 平移
 
-        /*} else if (rand_type % 2 != 0) {
-            float angle = (float) (rand.nextInt(10000) % 15 - 7); // 旋转角度控制在0-7°范围内
+        } else if (rand_type % 2 != 0) {
+            float angle = (float) (rand.nextInt(10000) % 15 - 7); // 旋转角度控制在-7~8°范围内
             result = rotateImg(result, angle);  // 旋转
-        }*/
-        
-        // 腐蚀算法
-        
+        }
+        /*
+        //进行膨胀操作
+        Mat element1 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 1));
+        Mat dstImage1;
+        Imgproc.dilate(inMat, result, element1);
+
+        //进行腐蚀操作
+        Mat element2 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 1));
+        Mat dstImage2;
+        Imgproc.erode(inMat, result, element2);
+        */
         return result;
     }
 
@@ -284,9 +292,6 @@ public class ANNTrain {
             Mat img = Imgcodecs.imread(string, 0);
             Mat f = features(img, Constant.predictSize);
 
-            // 140 predictSize = 10; vhist.length + hhist.length + lowData.cols() * lowData.rows();
-            // 440 predictSize = 20;
-            
             int index = 0;
             double maxVal = -2;
             Mat output = new Mat(1, Constant.numAll, CvType.CV_32F);
@@ -297,15 +302,15 @@ public class ANNTrain {
                     maxVal = val;
                     index = j;
                    
-                    // 输出预测可能的值
-                    String charValue = "";
+                    // 输出预测可能的值  -- 测试用
+                    /*String charValue = "";
                     if (index < Constant.numCharacter) {
                         charValue = String.valueOf(Constant.strCharacters[index]);
                     } else {
                         String s = Constant.strChinese[index - Constant.numCharacter];
                         charValue = Constant.KEY_CHINESE_MAP.get(s);
                     }
-                    System.out.println(string + "==>" + j + "\t\t" + charValue + "\t" + val);
+                    System.out.println(string + "==>" + j + "\t\t" + charValue + "\t" + val);*/
                 }
             }
             
