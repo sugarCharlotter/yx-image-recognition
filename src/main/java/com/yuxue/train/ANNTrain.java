@@ -118,36 +118,57 @@ public class ANNTrain {
 
 
     /**
-     * 按随机数，平移或者旋转样本文件
+     * 进行膨胀操作
      * @param inMat
      * @return
      */
-    public Mat getSyntheticImage(Mat inMat) {
-        Random rand = new Random();
-        int rand_type = rand.nextInt(10000);
+    public Mat dilate(Mat inMat) {
         Mat result = inMat.clone();
-        if (rand_type % 2 == 0) {
-        int ran_x = rand.nextInt(10000) % 5 - 2; // 控制在-2~3个像素范围内
-        int ran_y = rand.nextInt(10000) % 5 - 2;
-        result = translateImg(result, ran_x, ran_y);    // 平移
-
-        } else if (rand_type % 2 != 0) {
-            float angle = (float) (rand.nextInt(10000) % 15 - 7); // 旋转角度控制在-7~8°范围内
-            result = rotateImg(result, angle);  // 旋转
-        }
-        /*
-        //进行膨胀操作
-        Mat element1 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 1));
-        Mat dstImage1;
-        Imgproc.dilate(inMat, result, element1);
-
-        //进行腐蚀操作
-        Mat element2 = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(1, 1));
-        Mat dstImage2;
-        Imgproc.erode(inMat, result, element2);
-        */
+        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2));
+        Imgproc.dilate(inMat, result, element);
         return result;
     }
+
+    /**
+     * 进行腐蚀操作
+     * @param inMat
+     * @return
+     */
+    public Mat erode(Mat inMat) {
+        Mat result = inMat.clone();
+        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2));
+        Imgproc.erode(inMat, result, element);
+        return result;
+    }
+
+
+    /**
+     * 随机数平移
+     * @param inMat
+     * @return
+     */
+    public Mat randTranslate(Mat inMat) {
+        Random rand = new Random();
+        Mat result = inMat.clone();
+        int ran_x = rand.nextInt(10000) % 5 - 2; // 控制在-2~3个像素范围内
+        int ran_y = rand.nextInt(10000) % 5 - 2;
+        return translateImg(result, ran_x, ran_y);
+    }
+
+
+    /**
+     * 随机数旋转
+     * @param inMat
+     * @return
+     */
+    public Mat randRotate(Mat inMat) {
+        Random rand = new Random();
+        Mat result = inMat.clone();
+        float angle = (float) (rand.nextInt(10000) % 15 - 7); // 旋转角度控制在-7~8°范围内
+        return rotateImg(result, angle);
+    }
+
+
 
 
     /**
@@ -169,6 +190,7 @@ public class ANNTrain {
         return dst;
     }
 
+
     /**
      * 旋转角度
      * @param source
@@ -188,32 +210,36 @@ public class ANNTrain {
     public void train(int _predictsize, int _neurons) {
         Mat samples = new Mat(); // 使用push_back，行数列数不能赋初始值
         Vector<Integer> trainingLabels = new Vector<Integer>();
+        Random rand = new Random();
         // 加载数字及字母字符
         for (int i = 0; i < Constant.numCharacter; i++) {
             String str = DEFAULT_PATH + "learn/" + Constant.strCharacters[i];
             Vector<String> files = new Vector<String>();
             FileUtil.getFiles(str, files);  // 文件名不能包含中文
 
-            int count = 100; // 控制每个字符，最多只允许有200个样本文件
-            int k = 0;
-            // System.out.println("数字+字母：\t" + files.size());
-            for (String filePath : files) {
-                Mat img = Imgcodecs.imread(filePath, 0);
+            int count = 100; // 控制从训练样本中，抽取指定数量的样本
+            for (int j = 0; j < count; j++) {
+
+                Mat img = Imgcodecs.imread(files.get(rand.nextInt(files.size() - 1)), 0);
                 Mat f = features(img, _predictsize);
                 samples.push_back(f);
                 trainingLabels.add(i); // 每一幅字符图片所对应的字符类别索引下标
 
-                // 抽取1/3样本文件，平移或者旋转变换后，加入训练样本
-                if (k % 3 == 0) {
-                    samples.push_back(features(getSyntheticImage(img), _predictsize));
-                    trainingLabels.add(i); // 每一幅字符图片所对应的字符类别索引下标
-                }
-                k++;
-                
-                if(count <= 0) {
-                    break;
-                }
-                count--;
+                // 增加随机平移样本
+                samples.push_back(features(randTranslate(img), _predictsize));
+                trainingLabels.add(i); 
+
+                // 增加随机旋转样本
+                samples.push_back(features(randRotate(img), _predictsize));
+                trainingLabels.add(i); 
+
+                // 增加膨胀样本
+                /*samples.push_back(features(dilate(img), _predictsize));
+                trainingLabels.add(i); */
+
+                // 增加腐蚀样本
+                samples.push_back(features(erode(img), _predictsize));
+                trainingLabels.add(i); 
             }
         }
 
@@ -223,26 +249,28 @@ public class ANNTrain {
             Vector<String> files = new Vector<String>();
             FileUtil.getFiles(str, files);
 
-            int count = 50; // 控制每个字符，最多只允许有100个样本文件
-            int k = 0;
-            // System.out.println("汉字：\t" + files.size());
-            for (String filePath : files) {
-                Mat img = Imgcodecs.imread(filePath, 0);
+            int count = 100; // 控制从训练样本中，抽取指定数量的样本
+            for (int j = 0; j < count; j++) {
+                Mat img = Imgcodecs.imread(files.get(rand.nextInt(files.size() - 1)), 0);
                 Mat f = features(img, _predictsize);
                 samples.push_back(f);
-                trainingLabels.add(i + Constant.numCharacter); // 每一幅字符图片所对应的字符类别索引下标
+                trainingLabels.add(i + Constant.numCharacter);
 
-                // 抽取1/3样本文件，平移或者旋转变换后，加入训练样本
-                if (k % 3 == 0) {
-                    samples.push_back(features(getSyntheticImage(img), _predictsize));
-                    trainingLabels.add(i); // 每一幅字符图片所对应的字符类别索引下标
-                }
-                k++;
-                
-                if(count <= 0) {
-                    break;
-                }
-                count--;
+                // 增加随机平移样本
+                samples.push_back(features(randTranslate(img), _predictsize));
+                trainingLabels.add(i + Constant.numCharacter);
+
+                // 增加随机旋转样本
+                samples.push_back(features(randRotate(img), _predictsize));
+                trainingLabels.add(i + Constant.numCharacter);
+
+                // 增加膨胀样本
+                /*samples.push_back(features(dilate(img), _predictsize));
+                trainingLabels.add(i + Constant.numCharacter);*/
+
+                // 增加腐蚀样本
+                samples.push_back(features(erode(img), _predictsize));
+                trainingLabels.add(i + Constant.numCharacter);
             }
         }
 
@@ -262,7 +290,7 @@ public class ANNTrain {
 
         ann.clear();
         Mat layers = new Mat(1, 3, CvType.CV_32F);
-        layers.put(0, 0, samples.cols());   // 样本数量
+        layers.put(0, 0, samples.cols());   // 样本特征数
         layers.put(0, 1, _neurons); // 
         layers.put(0, 2, classes.cols());   // 字符数
 
@@ -285,7 +313,7 @@ public class ANNTrain {
         ann.clear();
         ann = ANN_MLP.load(MODEL_PATH);
         Vector<String> files = new Vector<String>();
-        FileUtil.getFiles(DEFAULT_PATH + "test/", files);
+        FileUtil.getFiles(DEFAULT_PATH + "test/", files);   // 获取测试文件
 
         String plate = "";
         for (String string : files) {
@@ -295,25 +323,59 @@ public class ANNTrain {
             int index = 0;
             double maxVal = -2;
             Mat output = new Mat(1, Constant.numAll, CvType.CV_32F);
-            ann.predict(f, output);  // 预测结果    // 可以考虑将样本进行平移、旋转、腐蚀等算法，进行多次预测，取最大值--未实现
+            ann.predict(f, output);  // 预测结果
             for (int j = 0; j < Constant.numAll; j++) {
                 double val = output.get(0, j)[0];
                 if (val > maxVal) {
                     maxVal = val;
                     index = j;
-                   
-                    // 输出预测可能的值  -- 测试用
-                    /*String charValue = "";
-                    if (index < Constant.numCharacter) {
-                        charValue = String.valueOf(Constant.strCharacters[index]);
-                    } else {
-                        String s = Constant.strChinese[index - Constant.numCharacter];
-                        charValue = Constant.KEY_CHINESE_MAP.get(s);
-                    }
-                    System.out.println(string + "==>" + j + "\t\t" + charValue + "\t" + val);*/
                 }
             }
             
+            // 随机平移
+            /*f = features(randTranslate(img), Constant.predictSize);
+            ann.predict(f, output);  // 预测结果
+            for (int j = 0; j < Constant.numAll; j++) {
+                double val = output.get(0, j)[0];
+                if (val > maxVal) {
+                    maxVal = val;
+                    index = j;
+                }
+            }*/
+            
+            // 随机旋转
+            /*f = features(randRotate(img), Constant.predictSize);
+            ann.predict(f, output);  // 预测结果
+            for (int j = 0; j < Constant.numAll; j++) {
+                double val = output.get(0, j)[0];
+                if (val > maxVal) {
+                    maxVal = val;
+                    index = j;
+                }
+            }*/
+            
+            // 膨胀
+            /*f = features(dilate(img), Constant.predictSize);
+            ann.predict(f, output);  // 预测结果
+            for (int j = 0; j < Constant.numAll; j++) {
+                double val = output.get(0, j)[0];
+                if (val > maxVal) {
+                    maxVal = val;
+                    index = j;
+                }
+            }*/
+            
+            // 腐蚀  -- 识别中文字符效果会好一点，识别数字及字母效果会更差
+            /*f = features(erode(img), Constant.predictSize);
+            ann.predict(f, output);  // 预测结果
+            for (int j = 0; j < Constant.numAll; j++) {
+                double val = output.get(0, j)[0];
+                if (val > maxVal) {
+                    maxVal = val;
+                    index = j;
+                }
+            }*/
+
             if (index < Constant.numCharacter) {
                 plate += String.valueOf(Constant.strCharacters[index]);
             } else {
@@ -331,7 +393,7 @@ public class ANNTrain {
         // 这里演示只训练model文件夹下的ann.xml，此模型是一个predictSize=10,neurons=40的ANN模型
         // 可根据需要训练不同的predictSize或者neurons的ANN模型
         // 根据机器的不同，训练时间不一样，但一般需要10分钟左右，所以慢慢等一会吧。
-        annT.train(Constant.predictSize, Constant.neurons);
+        // annT.train(Constant.predictSize, Constant.neurons);
 
         annT.predict();
 
