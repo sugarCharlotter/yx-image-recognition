@@ -66,9 +66,9 @@ public class ANNTrain {
                 } else {
                     filename = files.get(rand.nextInt(files.size() - 1));   // 样本不足，随机重复提取已有的样本
                 }
-                
+
                 Mat img = Imgcodecs.imread(filename, 0);
-                
+
                 Mat f = PlateUtil.features(img, _predictsize);
                 samples.push_back(f);
                 trainingLabels.add(i); // 每一幅字符图片所对应的字符类别索引下标
@@ -143,7 +143,7 @@ public class ANNTrain {
             FileUtil.getFiles(path, files);
 
             for (String filePath : files) {
-                
+
                 Mat img = Imgcodecs.imread(filePath, 0);
                 Mat f = PlateUtil.features(img, Constant.predictSize);
 
@@ -174,6 +174,10 @@ public class ANNTrain {
                 if(result.equals(String.valueOf(c))) {
                     correct++;
                 } else {
+                    // 删除异常样本
+                    /*File f1 = new File(filePath);
+                    f1.delete();*/
+
                     System.err.print(filePath);
                     System.err.println("\t预测结果：" + result);
                 }
@@ -181,14 +185,14 @@ public class ANNTrain {
             }
 
         }
-        
+
         System.out.print("total:" + total);
         System.out.print("\tcorrect:" + correct);
         System.out.print("\terror:" + (total - correct));
         System.out.println("\t计算准确率为：" + correct / (total * 1.0));
-        
+
         //牛逼，我操     total:13178  correct:13139   error:39    计算准确率为：0.9970405220822584
-        
+
         return;
     }
 
