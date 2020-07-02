@@ -298,6 +298,7 @@ public class CharsSegment {
 
     /**
      * 找出指示城市的字符的Rect，例如苏A7003X，就是A的位置
+     * 之所以选择城市的字符位置，是因为该位置不管什么字母，占用的宽度跟高度的差不多，能大大提高位置的准确性
      * @param vecRect
      * @return
      */

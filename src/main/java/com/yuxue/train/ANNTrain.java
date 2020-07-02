@@ -16,15 +16,17 @@ import org.opencv.ml.Ml;
 import org.opencv.ml.TrainData;
 
 import com.yuxue.constant.Constant;
-import com.yuxue.enumtype.Direction;
 import com.yuxue.util.FileUtil;
+import com.yuxue.util.PlateUtil;
 
 
 /**
  * 基于org.opencv包实现的训练
  * 
  * 图片文字识别训练
- * 训练出来的库文件，用于识别图片中的文字
+ * 训练出来的库文件，用于识别图片中的数字及字母
+ * 
+ * 测试了一段时间之后，发现把中文独立出来识别，准确率更高一点
  * 
  * 训练的ann.xml应用：
  * 1、替换res/model/ann.xml文件
@@ -46,75 +48,6 @@ public class ANNTrain {
 
     // 训练模型文件保存位置
     private static final String MODEL_PATH = DEFAULT_PATH + "ann.xml";
-
-
-    public static float[] projectedHistogram(final Mat img, Direction direction) {
-        int sz = 0;
-        switch (direction) {
-        case HORIZONTAL:
-            sz = img.rows();
-            break;
-
-        case VERTICAL:
-            sz = img.cols();
-            break;
-
-        default:
-            break;
-        }
-
-        // 统计这一行或一列中，非零元素的个数，并保存到nonZeroMat中
-        float[] nonZeroMat = new float[sz];
-        Core.extractChannel(img, img, 0);
-        for (int j = 0; j < sz; j++) {
-            Mat data = (direction == Direction.HORIZONTAL) ? img.row(j) : img.col(j);
-            int count = Core.countNonZero(data);
-            nonZeroMat[j] = count;
-        }
-        // Normalize histogram
-        float max = 0;
-        for (int j = 0; j < nonZeroMat.length; ++j) {
-            max = Math.max(max, nonZeroMat[j]);
-        }
-        if (max > 0) {
-            for (int j = 0; j < nonZeroMat.length; ++j) {
-                nonZeroMat[j] /= max;
-            }
-        }
-        return nonZeroMat;
-    }
-
-
-    public Mat features(Mat in, int sizeData) {
-
-
-        float[] vhist = projectedHistogram(in, Direction.VERTICAL);
-        float[] hhist = projectedHistogram(in, Direction.HORIZONTAL);
-
-        Mat lowData = new Mat();
-        if (sizeData > 0) {
-            Imgproc.resize(in, lowData, new Size(sizeData, sizeData));
-        }
-
-        int numCols = vhist.length + hhist.length + lowData.cols() * lowData.rows();
-        Mat out = new Mat(1, numCols, CvType.CV_32F);
-
-        int j = 0;
-        for (int i = 0; i < vhist.length; ++i, ++j) {
-            out.put(0, j, vhist[i]);
-        }
-        for (int i = 0; i < hhist.length; ++i, ++j) {
-            out.put(0, j, hhist[i]);
-        }
-
-        for (int x = 0; x < lowData.cols(); x++) {
-            for (int y = 0; y < lowData.rows(); y++, ++j) {
-                double[] val = lowData.get(x, y);
-                out.put(0, j, val[0]);
-            }
-        }
-        return out;
-    }
 
 
     /**
@@ -170,7 +103,6 @@ public class ANNTrain {
 
 
 
-
     /**
      * 平移
      * @param img
@@ -221,24 +153,24 @@ public class ANNTrain {
             for (int j = 0; j < count; j++) {
 
                 Mat img = Imgcodecs.imread(files.get(rand.nextInt(files.size() - 1)), 0);
-                Mat f = features(img, _predictsize);
+                Mat f = PlateUtil.features(img, _predictsize);
                 samples.push_back(f);
                 trainingLabels.add(i); // 每一幅字符图片所对应的字符类别索引下标
 
                 // 增加随机平移样本
-                samples.push_back(features(randTranslate(img), _predictsize));
+                samples.push_back(PlateUtil.features(randTranslate(img), _predictsize));
                 trainingLabels.add(i); 
 
                 // 增加随机旋转样本
-                samples.push_back(features(randRotate(img), _predictsize));
+                samples.push_back(PlateUtil.features(randRotate(img), _predictsize));
                 trainingLabels.add(i); 
 
                 // 增加膨胀样本
-                /*samples.push_back(features(dilate(img), _predictsize));
+                /*samples.push_back(PlateUtil.features(dilate(img), _predictsize));
                 trainingLabels.add(i);*/ 
 
                 // 增加腐蚀样本
-                /*samples.push_back(features(erode(img), _predictsize));
+                /*samples.push_back(PlateUtil.features(erode(img), _predictsize));
                 trainingLabels.add(i); */
             }
         }
@@ -252,24 +184,24 @@ public class ANNTrain {
             int count = 200; // 控制从训练样本中，抽取指定数量的样本
             for (int j = 0; j < count; j++) {
                 Mat img = Imgcodecs.imread(files.get(rand.nextInt(files.size() - 1)), 0);
-                Mat f = features(img, _predictsize);
+                Mat f = PlateUtil.features(img, _predictsize);
                 samples.push_back(f);
                 trainingLabels.add(i + Constant.numCharacter);
 
                 // 增加随机平移样本
-                samples.push_back(features(randTranslate(img), _predictsize));
+                samples.push_back(PlateUtil.features(randTranslate(img), _predictsize));
                 trainingLabels.add(i + Constant.numCharacter);
 
                 // 增加随机旋转样本
-                samples.push_back(features(randRotate(img), _predictsize));
+                samples.push_back(PlateUtil.features(randRotate(img), _predictsize));
                 trainingLabels.add(i + Constant.numCharacter);
 
                 // 增加膨胀样本
-                /*samples.push_back(features(dilate(img), _predictsize));
+                /*samples.push_back(PlateUtil.features(dilate(img), _predictsize));
                 trainingLabels.add(i + Constant.numCharacter);*/
 
                 // 增加腐蚀样本
-                samples.push_back(features(erode(img), _predictsize));
+                samples.push_back(PlateUtil.features(erode(img), _predictsize));
                 trainingLabels.add(i + Constant.numCharacter);
             }
         }
@@ -318,7 +250,7 @@ public class ANNTrain {
         String plate = "";
         for (String string : files) {
             Mat img = Imgcodecs.imread(string, 0);
-            Mat f = features(img, Constant.predictSize);
+            Mat f = PlateUtil.features(img, Constant.predictSize);
 
             int index = 0;
             double maxVal = -2;
@@ -333,7 +265,7 @@ public class ANNTrain {
             }
             
             // 随机平移
-            /*f = features(randTranslate(img), Constant.predictSize);
+            /*f = PlateUtil.features(randTranslate(img), Constant.predictSize);
             ann.predict(f, output);  // 预测结果
             for (int j = 0; j < Constant.numAll; j++) {
                 double val = output.get(0, j)[0];
@@ -344,7 +276,7 @@ public class ANNTrain {
             }*/
             
             // 随机旋转
-            /*f = features(randRotate(img), Constant.predictSize);
+            /*f = PlateUtil.features(randRotate(img), Constant.predictSize);
             ann.predict(f, output);  // 预测结果
             for (int j = 0; j < Constant.numAll; j++) {
                 double val = output.get(0, j)[0];
@@ -355,7 +287,7 @@ public class ANNTrain {
             }*/
             
             // 膨胀
-            /*f = features(dilate(img), Constant.predictSize);
+            /*f = PlateUtil.features(dilate(img), Constant.predictSize);
             ann.predict(f, output);  // 预测结果
             for (int j = 0; j < Constant.numAll; j++) {
                 double val = output.get(0, j)[0];
@@ -366,7 +298,7 @@ public class ANNTrain {
             }*/
             
             // 腐蚀  -- 识别中文字符效果会好一点，识别数字及字母效果会更差
-            /*f = features(erode(img), Constant.predictSize);
+            /*f = PlateUtil.features(erode(img), Constant.predictSize);
             ann.predict(f, output);  // 预测结果
             for (int j = 0; j < Constant.numAll; j++) {
                 double val = output.get(0, j)[0];
@@ -392,7 +324,8 @@ public class ANNTrain {
         ANNTrain annT = new ANNTrain();
         // 这里演示只训练model文件夹下的ann.xml，此模型是一个predictSize=10,neurons=40的ANN模型
         // 可根据需要训练不同的predictSize或者neurons的ANN模型
-        // 根据机器的不同，训练时间不一样，但一般需要10分钟左右，所以慢慢等一会吧。
+        // 根据机器的不同，训练时间不一样，但一般需要10分钟左右，所以慢慢等一会吧
+        // 可以考虑中文，数字字母分开训练跟识别，提高准确性
         annT.train(Constant.predictSize, Constant.neurons);
 
         annT.predict();

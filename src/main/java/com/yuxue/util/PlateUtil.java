@@ -3,6 +3,7 @@ package com.yuxue.util;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Map.Entry;
@@ -13,8 +14,10 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.ml.ANN_MLP;
@@ -23,8 +26,8 @@ import org.opencv.ml.SVM;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.yuxue.constant.Constant;
+import com.yuxue.enumtype.Direction;
 import com.yuxue.enumtype.PlateColor;
-import com.yuxue.train.ANNTrain;
 import com.yuxue.train.SVMTrain;
 
 
@@ -293,7 +296,6 @@ public class PlateUtil {
         String plate = "";
         Vector<Mat> dst = new Vector<Mat>();
         
-        ANNTrain annT = new ANNTrain();
         for (int i = 0; i < sorted.size(); i++) {
             Mat img_crop = new Mat(threshold, sorted.get(i));
             img_crop = preprocessChar(img_crop);
@@ -302,7 +304,7 @@ public class PlateUtil {
                 Imgcodecs.imwrite(tempPath + debugMap.get("plateCrop") + "_plateCrop_" + i + ".jpg", img_crop);
             }
             
-            Mat f = annT.features(img_crop, Constant.predictSize);
+            Mat f = features(img_crop, Constant.predictSize);
             
             // 字符预测
             Mat output = new Mat(1, 140, CvType.CV_32F);
@@ -381,6 +383,163 @@ public class PlateUtil {
     }
 
 
+    
+    public static float[] projectedHistogram(final Mat img, Direction direction) {
+        int sz = 0;
+        switch (direction) {
+        case HORIZONTAL:
+            sz = img.rows();
+            break;
+
+        case VERTICAL:
+            sz = img.cols();
+            break;
+
+        default:
+            break;
+        }
+
+        // 统计这一行或一列中，非零元素的个数，并保存到nonZeroMat中
+        float[] nonZeroMat = new float[sz];
+        Core.extractChannel(img, img, 0);
+        for (int j = 0; j < sz; j++) {
+            Mat data = (direction == Direction.HORIZONTAL) ? img.row(j) : img.col(j);
+            int count = Core.countNonZero(data);
+            nonZeroMat[j] = count;
+        }
+        // Normalize histogram
+        float max = 0;
+        for (int j = 0; j < nonZeroMat.length; ++j) {
+            max = Math.max(max, nonZeroMat[j]);
+        }
+        if (max > 0) {
+            for (int j = 0; j < nonZeroMat.length; ++j) {
+                nonZeroMat[j] /= max;
+            }
+        }
+        return nonZeroMat;
+    }
+
+
+    public static Mat features(Mat in, int sizeData) {
+
+        float[] vhist = projectedHistogram(in, Direction.VERTICAL);
+        float[] hhist = projectedHistogram(in, Direction.HORIZONTAL);
+
+        Mat lowData = new Mat();
+        if (sizeData > 0) {
+            Imgproc.resize(in, lowData, new Size(sizeData, sizeData));
+        }
+
+        int numCols = vhist.length + hhist.length + lowData.cols() * lowData.rows();
+        Mat out = new Mat(1, numCols, CvType.CV_32F);
+
+        int j = 0;
+        for (int i = 0; i < vhist.length; ++i, ++j) {
+            out.put(0, j, vhist[i]);
+        }
+        for (int i = 0; i < hhist.length; ++i, ++j) {
+            out.put(0, j, hhist[i]);
+        }
+
+        for (int x = 0; x < lowData.cols(); x++) {
+            for (int y = 0; y < lowData.rows(); y++, ++j) {
+                double[] val = lowData.get(x, y);
+                out.put(0, j, val[0]);
+            }
+        }
+        return out;
+    }
+
+
+    
+
+    /**
+     * 进行膨胀操作
+     * @param inMat
+     * @return
+     */
+    public static Mat dilate(Mat inMat) {
+        Mat result = inMat.clone();
+        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2));
+        Imgproc.dilate(inMat, result, element);
+        return result;
+    }
+
+    /**
+     * 进行腐蚀操作
+     * @param inMat
+     * @return
+     */
+    public static Mat erode(Mat inMat) {
+        Mat result = inMat.clone();
+        Mat element = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2, 2));
+        Imgproc.erode(inMat, result, element);
+        return result;
+    }
+
+
+    /**
+     * 随机数平移
+     * @param inMat
+     * @return
+     */
+    public static Mat randTranslate(Mat inMat) {
+        Random rand = new Random();
+        Mat result = inMat.clone();
+        int ran_x = rand.nextInt(10000) % 5 - 2; // 控制在-2~3个像素范围内
+        int ran_y = rand.nextInt(10000) % 5 - 2;
+        return translateImg(result, ran_x, ran_y);
+    }
+
+
+    /**
+     * 随机数旋转
+     * @param inMat
+     * @return
+     */
+    public static Mat randRotate(Mat inMat) {
+        Random rand = new Random();
+        Mat result = inMat.clone();
+        float angle = (float) (rand.nextInt(10000) % 15 - 7); // 旋转角度控制在-7~8°范围内
+        return rotateImg(result, angle);
+    }
+
+
+    /**
+     * 平移
+     * @param img
+     * @param offsetx
+     * @param offsety
+     * @return
+     */
+    public static Mat translateImg(Mat img, int offsetx, int offsety){
+        Mat dst = new Mat();
+        //定义平移矩阵
+        Mat trans_mat = Mat.zeros(2, 3, CvType.CV_32FC1);
+        trans_mat.put(0, 0, 1);
+        trans_mat.put(0, 2, offsetx);
+        trans_mat.put(1, 1, 1);
+        trans_mat.put(1, 2, offsety);
+        Imgproc.warpAffine(img, dst, trans_mat, img.size());    // 仿射变换
+        return dst;
+    }
+
+
+    /**
+     * 旋转角度
+     * @param source
+     * @param angle
+     * @return
+     */
+    public static Mat rotateImg(Mat source, float angle){
+        Point src_center = new Point(source.cols() / 2.0F, source.rows() / 2.0F);
+        Mat rot_mat = Imgproc.getRotationMatrix2D(src_center, angle, 1);
+        Mat dst = new Mat();
+        // 仿射变换 可以考虑使用投影变换; 这里使用放射变换进行旋转，对于实际效果来说感觉意义不大，反而会干扰结果预测
+        Imgproc.warpAffine(source, dst, rot_mat, source.size());    
+        return dst;
+    }
 
 
 
